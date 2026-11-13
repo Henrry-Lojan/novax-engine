@@ -3,71 +3,183 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Novax Engine · Tablero</title>
+  <title>Novax Engine · Tablero Ejecutivo</title>
   <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
   <header class="barra">
-    <b>NOVAX <span>ENGINE</span></b>
+    <div class="logo-bloque">
+      <b>NOVAX <span>ENGINE</span></b>
+      <span class="chip-status">En vivo · Supabase</span>
+    </div>
     <nav aria-label="Secciones">
-      <a href="index.html" aria-current="page">Tablero</a>
-      <a href="plan.html">Tiempo 1 · Plan</a>
-      <a href="cierre.html">Tiempo 2 · Cierre</a>
+      <a href="index.html" aria-current="page">📊 Tablero Ejecutivo</a>
+      <a href="plan.html">⏱️ Tiempo 1 · Plan</a>
+      <a href="cierre.html">✅ Tiempo 2 · Cierre</a>
     </nav>
   </header>
 
   <main>
-    <h1>Tablero de las obras</h1>
-    <p class="sub" id="sub">Cargando…</p>
+    <div class="encabezado-pagina">
+      <div>
+        <h1>Tablero Ejecutivo de Obras</h1>
+        <p class="sub" id="sub-actualizado">Cargando indicadores en tiempo real desde Supabase…</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn btn-secundario btn-sm" onclick="cargarDatos()">🔄 Actualizar datos</button>
+        <a href="plan.html" class="btn btn-primario btn-sm">➕ Nuevo Plan</a>
+      </div>
+    </div>
+
     <p id="aviso" class="aviso" role="alert" hidden></p>
 
-    <section class="kpis" id="kpis" aria-label="Indicadores principales"></section>
+    <!-- TARJETAS DE KPIS PRINCIPALES -->
+    <section class="kpis" aria-label="Indicadores principales">
+      <!-- KPI 1: NOTA DEL PLAN -->
+      <div class="kpi" id="kpi-nota">
+        <div class="kpi-cabecera">
+          <span class="tiempo-badge">Tiempo 1</span>
+          <button type="button" class="btn-info" onclick="explicarKpi('nota')" title="Ver explicación gerencial">ℹ️</button>
+        </div>
+        <div class="kpi-nombre">Nota Promedio del Plan</div>
+        <div class="valor" id="val-nota">—</div>
+        <div class="meta">Meta: ≥ <span id="meta-nota">80</span> pts (Buen plan)</div>
+      </div>
 
-    <h2>Estado por proyecto</h2>
-    <div class="tabla">
-      <table>
-        <thead>
-          <tr>
-            <th>Proyecto</th>
-            <th>Tiempo 1 · plan vigente</th>
-            <th class="centro">Nota</th>
-            <th class="centro">Restricciones liberadas</th>
-            <th>Tiempo 2 · último cierre</th>
-            <th class="centro">PPC</th>
-            <th class="centro">Cantidades</th>
-            <th>Lectura</th>
-          </tr>
-        </thead>
-        <tbody id="proyectos"></tbody>
-      </table>
+      <!-- KPI 2: RESTRICCIONES LIBERADAS -->
+      <div class="kpi" id="kpi-liberadas">
+        <div class="kpi-cabecera">
+          <span class="tiempo-badge">Tiempo 1</span>
+          <button type="button" class="btn-info" onclick="explicarKpi('liberadas')" title="Ver explicación gerencial">ℹ️</button>
+        </div>
+        <div class="kpi-nombre">Restricciones Liberadas</div>
+        <div class="valor" id="val-liberadas">—</div>
+        <div class="meta">Meta: ≥ 90 % liberadas antes de iniciar</div>
+      </div>
+
+      <!-- KPI 3: PPC PORTAFOLIO -->
+      <div class="kpi" id="kpi-ppc">
+        <div class="kpi-cabecera">
+          <span class="tiempo-badge" style="background:#e0f2fe; color:#0369a1;">Tiempo 2</span>
+          <button type="button" class="btn-info" onclick="explicarKpi('ppc')" title="Ver explicación gerencial">ℹ️</button>
+        </div>
+        <div class="kpi-nombre">PPC del Portafolio</div>
+        <div class="valor" id="val-ppc">—</div>
+        <div class="meta">Meta: ≥ 85 % cumplido</div>
+      </div>
+
+      <!-- KPI 4: CUMPLIMIENTO CANTIDADES -->
+      <div class="kpi" id="kpi-cantidades">
+        <div class="kpi-cabecera">
+          <span class="tiempo-badge" style="background:#e0f2fe; color:#0369a1;">Tiempo 2</span>
+          <button type="button" class="btn-info" onclick="explicarKpi('cantidades')" title="Ver explicación gerencial">ℹ️</button>
+        </div>
+        <div class="kpi-nombre">Cumplimiento Financiero</div>
+        <div class="valor" id="val-cantidades">—</div>
+        <div class="meta">Meta: ≥ 90 % en valorización</div>
+      </div>
+
+      <!-- KPI 5: FALLAS EVITABLES -->
+      <div class="kpi" id="kpi-evitables">
+        <div class="kpi-cabecera">
+          <span class="tiempo-badge" style="background:#fee2e2; color:#b91c1c;">Tiempo 2</span>
+          <button type="button" class="btn-info" onclick="explicarKpi('evitables')" title="Ver explicación gerencial">ℹ️</button>
+        </div>
+        <div class="kpi-nombre">Fallas Evitables</div>
+        <div class="valor" id="val-evitables">—</div>
+        <div class="meta">Meta: &lt; 20 % (gestión interna)</div>
+      </div>
+
+      <!-- KPI 6: ATRASO EXTERNO SDC -->
+      <div class="kpi" id="kpi-externas" style="border-left: 4px solid var(--externa);">
+        <div class="kpi-cabecera">
+          <span class="tiempo-badge" style="background:#e0e7ff; color:#4338ca;">Evidencia SDC</span>
+          <button type="button" class="btn-info" onclick="explicarKpi('externas')" title="Ver explicación gerencial">ℹ️</button>
+        </div>
+        <div class="kpi-nombre">Atraso Externo Documentado</div>
+        <div class="valor" id="val-externas" style="color:var(--externa);">—</div>
+        <div class="meta">Para reclamos y ampliación de plazo</div>
+      </div>
+    </section>
+
+    <!-- PESTAÑAS DE VISTA EJECUTIVA -->
+    <div class="filtros-pestañas">
+      <button type="button" class="filtro-btn activo" id="tab-btn-obras" onclick="cambiarPestaña('obras')">🏢 Estado y Desempeño por Obra</button>
+      <button type="button" class="filtro-btn" id="tab-btn-analisis" onclick="cambiarPestaña('analisis')">📉 Análisis de Causas y Tendencia PPC</button>
+      <button type="button" class="filtro-btn" id="tab-btn-sdc" onclick="cambiarPestaña('sdc')">⚖️ Sustento Contractual SDC (Atrasos Externos)</button>
     </div>
 
-    <div class="dos">
-      <section>
-        <h2>PPC por período (meta <span id="meta-ppc"></span> %)</h2>
-        <div class="caja" id="tendencia"></div>
-      </section>
-      <section>
-        <h2>¿Por qué no se cumplió?</h2>
-        <div class="caja" id="causas"></div>
-      </section>
+    <!-- SECCIÓN 1: ESTADO POR OBRA -->
+    <div id="vista-obras">
+      <div class="tabla-tarjeta">
+        <div class="tabla-busqueda">
+          <input type="search" id="busqueda-obras" placeholder="🔍 Buscar por código, nombre u supervisor…" oninput="filtrarTablaObras()">
+          <small style="color:var(--texto-secundario);">Haz clic en cualquier obra para ver su detalle ejecutivo completo</small>
+        </div>
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Proyecto / Obra</th>
+                <th>Tiempo 1: Lookahead Vigente</th>
+                <th class="centro">Calidad del Plan</th>
+                <th class="centro">Restricciones</th>
+                <th>Tiempo 2: Último Cierre</th>
+                <th class="centro">PPC Real</th>
+                <th>Lectura Ejecutiva</th>
+                <th class="centro">Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo-proyectos">
+              <tr><td colspan="8" class="centro"><small>Cargando obras…</small></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <h2>Atrasos externos documentados (sustento para SDC)</h2>
-    <div class="tabla">
-      <table>
-        <thead>
-          <tr>
-            <th>Proyecto</th>
-            <th>Período</th>
-            <th>Rubro</th>
-            <th>Planificado / ejecutado</th>
-            <th>Causa</th>
-            <th class="centro">Días</th>
-          </tr>
-        </thead>
-        <tbody id="evidencia"></tbody>
-      </table>
+    <!-- SECCIÓN 2: ANÁLISIS DE CAUSAS Y TENDENCIA -->
+    <div id="vista-analisis" hidden>
+      <div class="dos-columnas">
+        <div class="caja-grafico">
+          <h3>📈 Tendencia Quincenal del PPC (Portafolio)</h3>
+          <p class="sub" style="margin-bottom:14px;">La línea vertical roja indica la meta corporativa de confiabilidad (85%).</p>
+          <div id="grafico-tendencia"></div>
+        </div>
+
+        <div class="caja-grafico">
+          <h3>⚠️ Distribución de Causas de No Cumplimiento</h3>
+          <p class="sub" style="margin-bottom:14px;">Diferenciación entre fallas internas evitables y causas externas reclamables.</p>
+          <div id="grafico-causas"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: SUSTENTO CONTRACTUAL SDC -->
+    <div id="vista-sdc" hidden>
+      <div class="tabla-tarjeta">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--borde); background:#fafafa;">
+          <h3 style="margin:0 0 4px; font-size:16px; color:var(--primario);">Expediente de Atrasos Externos (Sustento para SDC)</h3>
+          <p class="sub">Eventos fuera del control del contratista (lluvias, atrasos de cliente, interferencias LUG) listados como respaldo para reclamos de plazo y costo directo.</p>
+        </div>
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Proyecto</th>
+                <th>Período Quincenal</th>
+                <th>Rubro de Obra Afectado</th>
+                <th class="centro">Plan vs. Ejecutado</th>
+                <th>Causa Externa Imputable</th>
+                <th class="centro">Días de Atraso</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo-evidencia">
+              <tr><td colspan="6" class="centro"><small>Sin atrasos externos registrados.</small></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </main>
 
@@ -75,98 +187,300 @@
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script>
-    const kpi = (tiempo, nombre, valor, meta, bien) =>
-      `<div class="kpi ${valor === null ? '' : bien ? 'ok' : 'mal'}">
-         <div class="tiempo">${tiempo}</div><div>${nombre}</div>
-         <div class="valor">${valor === null ? '—' : valor}</div><div class="meta">${meta}</div>
-       </div>`;
+    let cacheProyectos = [];
+    let cachePlanes = [];
+    let cacheFallas = [];
 
-    const barra = (etiqueta, texto, ancho, clase = '', meta = null) =>
-      `<div class="barra-dato"><span>${etiqueta}</span>
-         <div class="pista"><span class="${clase}" style="width:${ancho ?? 0}%"></span>${meta === null ? '' : `<i style="left:${meta}%"></i>`}</div>
-         <b>${texto}</b></div>`;
+    function cambiarPestaña(nombre) {
+      document.querySelectorAll('.filtro-btn').forEach(btn => btn.classList.remove('activo'));
+      document.getElementById(`tab-btn-${nombre}`).classList.add('activo');
 
-    async function cargar() {
-      const [proyectos, planes, fallas] = await Promise.all([
-        leer(db.from('proyecto').select('*').order('codigo')),
-        leer(db.from('v_plan').select('*').order('inicio')),
-        leer(db.from('v_tarea').select('*').eq('cerrado', true).eq('cumplida', false).order('inicio')),
-      ]);
-
-      const ultimo = (codigo, soloCerrados) =>
-        planes.filter(p => p.proyecto === codigo && (!soloCerrados || p.cerrado)).at(-1);
-      const vigentes = proyectos.map(p => ultimo(p.codigo, false)).filter(Boolean);
-      const cierres = proyectos.map(p => ultimo(p.codigo, true)).filter(Boolean);
-      const externas = fallas.filter(f => f.causa_tipo === 'externa');
-
-      const nota = vigentes.length ? Math.round(suma(vigentes, 'nota') / vigentes.length) : null;
-      const liberadas = pct(suma(vigentes, 'liberadas'), suma(vigentes, 'restricciones'));
-      const ppc = pct(suma(cierres, 'cumplidas'), suma(cierres, 'tareas'));
-      const cantidades = pct(suma(cierres, 'valor_real'), suma(cierres, 'valor_plan'));
-      const evitables = pct(suma(cierres, 'evitables'), suma(cierres, 'tareas'));
-      const dias = suma(externas, 'dias_atraso');
-
-      document.getElementById('sub').textContent =
-        `${proyectos.length} proyectos · ${planes.length} planes · actualizado ${new Date().toLocaleString('es-EC')}`;
-      document.getElementById('meta-ppc').textContent = META.ppc;
-
-      document.getElementById('kpis').innerHTML = [
-        kpi('Tiempo 1', 'Nota del plan', nota, `meta ≥ ${META.nota}`, nota >= META.nota),
-        kpi('Tiempo 1', 'Restricciones liberadas', liberadas === null ? null : `${liberadas} %`, `meta ≥ ${META.liberadas} %`, liberadas >= META.liberadas),
-        kpi('Tiempo 2', 'PPC del portafolio', ppc === null ? null : `${ppc} %`, `meta ≥ ${META.ppc} %`, ppc >= META.ppc),
-        kpi('Tiempo 2', 'Cumplimiento de cantidades', cantidades === null ? null : `${cantidades} %`, `meta ≥ ${META.cantidades} %`, cantidades >= META.cantidades),
-        kpi('Tiempo 2', 'Fallas evitables', evitables === null ? null : `${evitables} %`, `meta < ${META.evitables} %`, evitables < META.evitables),
-        `<div class="kpi"><div class="tiempo">Evidencia</div><div>Atraso externo</div><div class="valor">${dias} días</div><div class="meta">documentado para SDC</div></div>`,
-      ].join('');
-
-      document.getElementById('proyectos').innerHTML = proyectos.map(p => {
-        const vigente = ultimo(p.codigo, false);
-        const cierre = ultimo(p.codigo, true);
-        const nombre = `<b>${h(p.codigo)} · ${h(p.nombre)}</b><small>${h(p.supervisor)} · ${h(p.estado)}</small>`;
-        if (!vigente) return `<tr><td>${nombre}</td><td colspan="7"><small>Sin planes registrados</small></td></tr>`;
-        const [texto, clase] = nivel(vigente.nota);
-        const ppcCierre = cierre && pct(cierre.cumplidas, cierre.tareas);
-        return `<tr>
-          <td>${nombre}</td>
-          <td>${periodo(vigente.inicio)}<small>${vigente.cerrado ? 'cerrado' : 'en curso'} · ${vigente.tareas} rubros</small></td>
-          <td class="centro"><b>${vigente.nota}</b><br><span class="etiqueta ${clase}">${texto}</span></td>
-          <td class="centro">${vigente.restricciones ? `${vigente.liberadas} de ${vigente.restricciones}` : '—'}</td>
-          <td>${cierre ? `${periodo(cierre.inicio)}<small>${cierre.cumplidas} de ${cierre.tareas} rubros cumplidos</small>` : '<small>Aún sin cierre</small>'}</td>
-          <td class="centro">${cierre ? `<span class="etiqueta ${ppcCierre >= META.ppc ? 'ok' : 'mal'}">${ppcCierre} %</span>` : '—'}</td>
-          <td class="centro">${cierre ? `${pct(cierre.valor_real, cierre.valor_plan)} %` : '—'}</td>
-          <td>${h(lectura(cierre))}</td>
-        </tr>`;
-      }).join('');
-
-      const periodos = [...new Set(planes.filter(p => p.cerrado).map(p => p.inicio))];
-      document.getElementById('tendencia').innerHTML = periodos.map(inicio => {
-        const grupo = planes.filter(p => p.cerrado && p.inicio === inicio);
-        const valor = pct(suma(grupo, 'cumplidas'), suma(grupo, 'tareas'));
-        return barra(fecha(inicio), `${valor} %`, valor, valor >= META.ppc ? 'ok' : 'mal', META.ppc);
-      }).join('') || '<small>Todavía no hay planes cerrados.</small>';
-
-      const causas = Object.values(fallas.reduce((grupos, f) => {
-        grupos[f.causa_nombre] ??= { nombre: f.causa_nombre, tipo: f.causa_tipo, veces: 0 };
-        grupos[f.causa_nombre].veces++;
-        return grupos;
-      }, {})).sort((a, b) => b.veces - a.veces);
-      const evitablesTotal = fallas.filter(f => f.causa_tipo === 'evitable').length;
-      document.getElementById('causas').innerHTML = causas.length
-        ? causas.map(c => barra(`${h(c.nombre)} <span class="etiqueta ${c.tipo}">${c.tipo}</span>`, c.veces, pct(c.veces, fallas.length), c.tipo)).join('') +
-          `<p class="sub">${fallas.length} rubros no cumplidos en todos los cierres: ${pct(evitablesTotal, fallas.length)} % evitables (los corregimos nosotros) y ${pct(fallas.length - evitablesTotal, fallas.length)} % externas (se reclaman).</p>`
-        : '<small>Todavía no hay rubros sin cumplir.</small>';
-
-      document.getElementById('evidencia').innerHTML = externas.map(f => `<tr>
-          <td>${h(f.proyecto)}</td>
-          <td>${periodo(f.inicio)}</td>
-          <td>${h(f.item)} · ${h(f.descripcion)}${f.restriccion ? `<small>Restricción: ${h(f.restriccion)}</small>` : ''}</td>
-          <td>${numero(f.cantidad_plan)} / ${numero(f.cantidad_real)} ${h(f.unidad)}</td>
-          <td><span class="etiqueta externa">${h(f.causa_nombre)}</span></td>
-          <td class="centro">${f.dias_atraso}</td>
-        </tr>`).join('') || '<tr><td colspan="6"><small>Sin atrasos externos registrados.</small></td></tr>';
+      document.getElementById('vista-obras').hidden = nombre !== 'obras';
+      document.getElementById('vista-analisis').hidden = nombre !== 'analisis';
+      document.getElementById('vista-sdc').hidden = nombre !== 'sdc';
     }
 
-    cargar().catch(fallo);
+    async function cargarDatos() {
+      avisar('');
+      const sub = document.getElementById('sub-actualizado');
+      sub.textContent = 'Actualizando desde Supabase…';
+
+      try {
+        const [proyectos, planes, fallas] = await Promise.all([
+          leer(db.from('proyecto').select('*').order('codigo')),
+          leer(db.from('v_plan').select('*').order('inicio')),
+          leer(db.from('v_tarea').select('*').eq('cerrado', true).eq('cumplida', false).order('inicio')),
+        ]);
+
+        cacheProyectos = proyectos;
+        cachePlanes = planes;
+        cacheFallas = fallas;
+
+        sub.textContent = `${proyectos.length} obras · ${planes.length} planes registrados · Última sincronización: ${new Date().toLocaleTimeString('es-EC')}`;
+
+        // Cálculo de KPIs
+        const ultimo = (codigo, soloCerrados) =>
+          planes.filter(p => p.proyecto === codigo && (!soloCerrados || p.cerrado)).at(-1);
+
+        const vigentes = proyectos.map(p => ultimo(p.codigo, false)).filter(Boolean);
+        const cierres = proyectos.map(p => ultimo(p.codigo, true)).filter(Boolean);
+        const externas = fallas.filter(f => f.causa_tipo === 'externa');
+
+        const nota = vigentes.length ? Math.round(suma(vigentes, 'nota') / vigentes.length) : null;
+        const liberadas = pct(suma(vigentes, 'liberadas'), suma(vigentes, 'restricciones'));
+        const ppc = pct(suma(cierres, 'cumplidas'), suma(cierres, 'tareas'));
+        const cantidades = pct(suma(cierres, 'valor_real'), suma(cierres, 'valor_plan'));
+        const evitables = pct(suma(cierres, 'evitables'), suma(cierres, 'tareas'));
+        const diasExternos = suma(externas, 'dias_atraso');
+
+        // Renderizar KPIs
+        const setKpi = (idVal, idCont, valor, textoValor, esOk) => {
+          document.getElementById(idVal).textContent = textoValor;
+          const cont = document.getElementById(idCont);
+          cont.className = `kpi ${valor === null ? '' : esOk ? 'ok' : 'mal'}`;
+        };
+
+        setKpi('val-nota', 'kpi-nota', nota, nota === null ? '—' : `${nota} pts`, nota >= META.nota);
+        setKpi('val-liberadas', 'kpi-liberadas', liberadas, liberadas === null ? '—' : `${liberadas} %`, liberadas >= META.liberadas);
+        setKpi('val-ppc', 'kpi-ppc', ppc, ppc === null ? '—' : `${ppc} %`, ppc >= META.ppc);
+        setKpi('val-cantidades', 'kpi-cantidades', cantidades, cantidades === null ? '—' : `${cantidades} %`, cantidades >= META.cantidades);
+        setKpi('val-evitables', 'kpi-evitables', evitables, evitables === null ? '—' : `${evitables} %`, evitables < META.evitables);
+        document.getElementById('val-externas').textContent = `${diasExternos} días`;
+
+        // Renderizar tablas y gráficos
+        renderizarTablaObras();
+        renderizarGraficos();
+        renderizarSdc(externas);
+
+      } catch (err) {
+        fallo(err);
+      }
+    }
+
+    function renderizarTablaObras() {
+      const busqueda = (document.getElementById('busqueda-obras').value || '').toLowerCase();
+      const ultimo = (codigo, soloCerrados) =>
+        cachePlanes.filter(p => p.proyecto === codigo && (!soloCerrados || p.cerrado)).at(-1);
+
+      const filtrados = cacheProyectos.filter(p =>
+        p.codigo.toLowerCase().includes(busqueda) ||
+        p.nombre.toLowerCase().includes(busqueda) ||
+        p.supervisor.toLowerCase().includes(busqueda)
+      );
+
+      const cuerpo = document.getElementById('cuerpo-proyectos');
+      if (!filtrados.length) {
+        cuerpo.innerHTML = '<tr><td colspan="8" class="centro"><small>No se encontraron obras con ese criterio.</small></td></tr>';
+        return;
+      }
+
+      cuerpo.innerHTML = filtrados.map(p => {
+        const vigente = ultimo(p.codigo, false);
+        const cierre = ultimo(p.codigo, true);
+        const nombreHtml = `<b>${h(p.codigo)} · ${h(p.nombre)}</b><small>Supervisor: ${h(p.supervisor)} · Estado: ${h(p.estado)}</small>`;
+
+        if (!vigente) {
+          return `<tr>
+            <td>${nombreHtml}</td>
+            <td colspan="6"><small>Sin planes registrados. <a href="plan.html?proyecto=${p.codigo}">Crear primer plan</a></small></td>
+            <td class="centro"><button type="button" class="btn btn-secundario btn-sm" onclick="verDetalleObra('${p.codigo}')">Detalle</button></td>
+          </tr>`;
+        }
+
+        const [textoNota, claseNota] = nivel(vigente.nota);
+        const ppcCierre = cierre && pct(cierre.cumplidas, cierre.tareas);
+
+        return `
+          <tr style="cursor:pointer;" onclick="verDetalleObra('${p.codigo}')">
+            <td>${nombreHtml}</td>
+            <td>
+              <b>${periodo(vigente.inicio)}</b>
+              <small>${vigente.cerrado ? '✓ Plan cerrado' : '⏱️ En curso'} · ${vigente.tareas} rubros</small>
+            </td>
+            <td class="centro">
+              <span class="etiqueta ${claseNota}"><b>${vigente.nota}</b> · ${textoNota}</span>
+            </td>
+            <td class="centro">
+              ${vigente.restricciones ? `${vigente.liberadas} de ${vigente.restricciones}` : '<small>Sin trabas</small>'}
+            </td>
+            <td>
+              ${cierre ? `<b>${periodo(cierre.inicio)}</b><small>${cierre.cumplidas} de ${cierre.tareas} rubros cumplidos</small>` : '<small>Aún sin cierre</small>'}
+            </td>
+            <td class="centro">
+              ${cierre ? `<span class="etiqueta ${ppcCierre >= META.ppc ? 'ok' : 'mal'}"><b>${ppcCierre} %</b></span>` : '—'}
+            </td>
+            <td>
+              <span style="font-size:13px; font-weight:600; color:var(--primario);">${h(lectura(cierre))}</span>
+            </td>
+            <td class="centro" onclick="event.stopPropagation()">
+              <button type="button" class="btn btn-secundario btn-sm" onclick="verDetalleObra('${p.codigo}')">🔍 Ver</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filtrarTablaObras() {
+      renderizarTablaObras();
+    }
+
+    function renderizarGraficos() {
+      // 1. Tendencia PPC
+      const periodos = [...new Set(cachePlanes.filter(p => p.cerrado).map(p => p.inicio))];
+      const divTendencia = document.getElementById('grafico-tendencia');
+      divTendencia.innerHTML = periodos.map(ini => {
+        const grupo = cachePlanes.filter(p => p.cerrado && p.inicio === ini);
+        const val = pct(suma(grupo, 'cumplidas'), suma(grupo, 'tareas'));
+        return `
+          <div class="barra-dato" style="grid-template-columns: 140px 1fr 50px;">
+            <span><b>${fecha(ini)}</b></span>
+            <div class="pista">
+              <span class="${val >= META.ppc ? 'ok' : 'mal'}" style="width:${val ?? 0}%"></span>
+              <i style="left:${META.ppc}%;"></i>
+            </div>
+            <b>${val} %</b>
+          </div>
+        `;
+      }).join('') || '<p class="sub">Todavía no hay quincenas cerradas.</p>';
+
+      // 2. Causas de No Cumplimiento
+      const causasAgrupadas = Object.values(cacheFallas.reduce((acc, f) => {
+        acc[f.causa_nombre] ??= { nombre: f.causa_nombre, tipo: f.causa_tipo, veces: 0 };
+        acc[f.causa_nombre].veces++;
+        return acc;
+      }, {})).sort((a, b) => b.veces - a.veces);
+
+      const divCausas = document.getElementById('grafico-causas');
+      divCausas.innerHTML = causasAgrupadas.length
+        ? causasAgrupadas.map(c => `
+            <div class="barra-dato" style="grid-template-columns: 180px 1fr 40px;">
+              <span><b>${h(c.nombre)}</b> <span class="etiqueta ${c.tipo}" style="font-size:10px; padding:1px 6px;">${c.tipo}</span></span>
+              <div class="pista">
+                <span class="${c.tipo}" style="width:${pct(c.veces, cacheFallas.length)}%"></span>
+              </div>
+              <b>${c.veces}</b>
+            </div>
+          `).join('')
+        : '<p class="sub">Sin rubros incumplidos.</p>';
+    }
+
+    function renderizarSdc(externas) {
+      const cuerpo = document.getElementById('cuerpo-evidencia');
+      if (!externas.length) {
+        cuerpo.innerHTML = '<tr><td colspan="6" class="centro"><small>No se registran atrasos externos.</small></td></tr>';
+        return;
+      }
+      cuerpo.innerHTML = externas.map(f => `
+        <tr>
+          <td><b>${h(f.proyecto)}</b></td>
+          <td>${periodo(f.inicio)}</td>
+          <td>
+            <b>${h(f.item)} · ${h(f.descripcion)}</b>
+            ${f.restriccion ? `<small>Restricción documentada: ${h(f.restriccion)}</small>` : ''}
+          </td>
+          <td class="centro">${numero(f.cantidad_plan)} / ${numero(f.cantidad_real)} ${h(f.unidad)}</td>
+          <td><span class="etiqueta externa">${h(f.causa_nombre)}</span></td>
+          <td class="centro" style="font-weight:700; color:var(--externa);">${f.dias_atraso} días</td>
+        </tr>
+      `).join('');
+    }
+
+    /* =========================================================
+       MODAL EJECUTIVO: DETALLE COMPLETO DE UNA OBRA
+       ========================================================= */
+
+    function verDetalleObra(codigo) {
+      const proy = cacheProyectos.find(p => p.codigo === codigo);
+      if (!proy) return;
+
+      const planesObra = cachePlanes.filter(p => p.proyecto === codigo).sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
+      const fallasObra = cacheFallas.filter(f => f.proyecto === codigo);
+
+      const planesAbiertos = planesObra.filter(p => !p.cerrado);
+      const planesCerrados = planesObra.filter(p => p.cerrado);
+
+      const ppcPromedio = planesCerrados.length 
+        ? pct(suma(planesCerrados, 'cumplidas'), suma(planesCerrados, 'tareas'))
+        : null;
+
+      const html = `
+        <div style="margin-bottom:18px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <span class="etiqueta ok" style="font-size:13px;">${h(proy.estado)}</span>
+              <span style="font-size:14px; color:var(--texto-secundario); margin-left:8px;">Supervisor a cargo: <b>${h(proy.supervisor)}</b></span>
+            </div>
+            <div>
+              ${ppcPromedio !== null ? `<span class="etiqueta ${ppcPromedio >= META.ppc ? 'ok' : 'mal'}" style="font-size:13px;">PPC Histórico: <b>${ppcPromedio}%</b></span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        ${planesAbiertos.length ? `
+          <div style="background:#fffbeb; border:1px solid var(--alerta-borde); padding:12px 16px; border-radius:10px; margin-bottom:18px;">
+            <div style="font-weight:700; color:var(--alerta); font-size:14px;">⏱️ Plan abierto pendiente de cierre:</div>
+            <p style="margin:4px 0 10px; font-size:13px;">Período: <b>${periodo(planesAbiertos[0].inicio)}</b> (${planesAbiertos[0].tareas} rubros a evaluar).</p>
+            <a href="cierre.html?plan_id=${planesAbiertos[0].id}" class="btn btn-primario btn-sm">▶ Cerrar este plan ahora</a>
+          </div>
+        ` : ''}
+
+        <h4 style="margin:16px 0 8px; font-size:15px;">Historial de Lookaheads quincenales:</h4>
+        <div class="tabla-scroll" style="margin-bottom:16px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Período</th>
+                <th class="centro">Nota Plan</th>
+                <th class="centro">PPC Real</th>
+                <th>Diagnóstico Gerencial</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${planesObra.map(p => {
+                const [tNota, cNota] = nivel(p.nota);
+                const ppc = p.cerrado ? pct(p.cumplidas, p.tareas) : null;
+                return `
+                  <tr>
+                    <td><b>${periodo(p.inicio)}</b></td>
+                    <td class="centro"><span class="etiqueta ${cNota}">${p.nota}</span></td>
+                    <td class="centro">${ppc !== null ? `<span class="etiqueta ${ppc >= META.ppc ? 'ok' : 'mal'}">${ppc}%</span>` : '<small>En curso</small>'}</td>
+                    <td><small>${h(lectura(p)) || 'Pendiente de cierre'}</small></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        ${fallasObra.length ? `
+          <h4 style="margin:16px 0 8px; font-size:15px; color:var(--mal);">Causas de atraso registradas en esta obra:</h4>
+          <ul style="margin:0; padding-left:20px; font-size:13px; color:var(--texto-secundario);">
+            ${fallasObra.map(f => `
+              <li style="margin-bottom:4px;">
+                <b>${h(f.item)} · ${h(f.descripcion)}:</b> ${h(f.causa_nombre)} 
+                <span class="etiqueta ${f.causa_tipo}" style="font-size:10px; padding:1px 6px;">${f.causa_tipo}</span>
+                ${f.dias_atraso ? `(${f.dias_atraso} días)` : ''}
+              </li>
+            `).join('')}
+          </ul>
+        ` : '<p class="sub" style="font-size:13px;">Esta obra no tiene atrasos registrados.</p>'}
+      `;
+
+      const botones = `
+        <a href="plan.html?proyecto=${proy.codigo}" class="btn btn-primario">➕ Crear Nuevo Plan</a>
+        <button type="button" class="btn btn-secundario" onclick="cerrarModal()">Cerrar</button>
+      `;
+
+      abrirModal({
+        titulo: `🏢 ${h(proy.codigo)} · ${h(proy.nombre)}`,
+        subtitulo: `Panel Ejecutivo de Detalle`,
+        contenidoHtml: html,
+        botonesHtml: botones,
+        anchoMax: '680px'
+      });
+    }
+
+    cargarDatos();
   </script>
 </body>
 </html>

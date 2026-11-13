@@ -8,50 +8,98 @@
 </head>
 <body>
   <header class="barra">
-    <b>NOVAX <span>ENGINE</span></b>
+    <div class="logo-bloque">
+      <b>NOVAX <span>ENGINE</span></b>
+      <span class="chip-status">En vivo · Supabase</span>
+    </div>
     <nav aria-label="Secciones">
-      <a href="index.html">Tablero</a>
-      <a href="plan.html" aria-current="page">Tiempo 1 · Plan</a>
-      <a href="cierre.html">Tiempo 2 · Cierre</a>
+      <a href="index.html">📊 Tablero Ejecutivo</a>
+      <a href="plan.html" aria-current="page">⏱️ Tiempo 1 · Plan</a>
+      <a href="cierre.html">✅ Tiempo 2 · Cierre</a>
     </nav>
   </header>
 
   <main>
-    <h1>Tiempo 1 · Entregar el plan de 2 semanas</h1>
-    <p class="sub">Se entrega el jueves o viernes. Pon la cantidad solo en los rubros que vas a hacer y responde las tres
-      preguntas de cada uno. El cronograma, el rendimiento y la fecha de entrega los revisa el sistema.</p>
+    <div class="encabezado-pagina">
+      <div>
+        <h1>Tiempo 1 · Entregar Plan de 2 Semanas</h1>
+        <p class="sub">El supervisor se compromete con los rubros que ejecutará en la quincena. El sistema audita automáticamente el cronograma, el rendimiento y la anticipación para calcular la <b>Nota del Plan (0 a 100)</b>.</p>
+      </div>
+      <div>
+        <button type="button" class="btn btn-secundario btn-sm" onclick="explicarKpi('nota')">ℹ️ ¿Cómo se califica el plan?</button>
+      </div>
+    </div>
+
     <p id="aviso" class="aviso" role="alert" hidden></p>
 
-    <form id="form" novalidate>
-      <div class="fila">
-        <label>Proyecto
+    <form id="form" class="formulario-tarjeta" novalidate>
+      <div class="fila-campos">
+        <div>
+          <label for="proyecto">1. Selecciona la Obra / Proyecto</label>
           <select id="proyecto" required></select>
-        </label>
-        <label>Lunes de inicio <small>el plan cubre ese lunes y la semana siguiente</small>
+        </div>
+        <div>
+          <label for="inicio">2. Lunes de Inicio del Lookahead <small>(cubre 2 semanas)</small></label>
           <input type="date" id="inicio" required>
-        </label>
+        </div>
       </div>
 
-      <div class="tabla">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0 10px;">
+        <h3 style="margin:0; font-size:16px;">Rubros disponibles para planificar</h3>
+        <span id="contador-seleccionados" class="etiqueta ok">0 rubros seleccionados</span>
+      </div>
+
+      <div class="tabla-tarjeta">
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Rubro de Obra</th>
+                <th style="min-width:140px;">Cant. a ejecutar</th>
+                <th class="centro" title="¿Está terminada la actividad predecesora en obra?">¿Secuencia ok?</th>
+                <th class="centro" title="¿Cuadrilla y maquinaria disponibles al 100%?">¿Recursos ok?</th>
+                <th class="centro" title="¿Materiales solicitados con debida anticipación?">¿Material a tiempo?</th>
+                <th style="min-width:200px;">Restricción pendiente (si hay)</th>
+                <th class="centro" title="¿La restricción ya fue resuelta antes de iniciar?">¿Liberada?</th>
+              </tr>
+            </thead>
+            <tbody id="rubros"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:12px;">
+        <small style="color:var(--texto-secundario)">* Los rubros con cantidad 0 no serán incluidos en este plan.</small>
+        <button type="submit" id="btn-enviar" class="btn btn-primario" style="font-size:15px; padding:12px 28px;">
+          🚀 Entregar y Calificar Plan
+        </button>
+      </div>
+    </form>
+
+    <!-- HISTORIAL DE PLANES DEL PROYECTO -->
+    <div class="formulario-tarjeta" style="margin-top:28px;">
+      <h3 style="margin:0 0 12px; font-size:16px; display:flex; justify-content:space-between; align-items:center;">
+        <span>📋 Planes registrados de este proyecto</span>
+        <small id="sub-historial" style="font-weight:normal;"></small>
+      </h3>
+      <div class="tabla-scroll">
         <table>
           <thead>
             <tr>
-              <th>Rubro</th>
-              <th>Cantidad a ejecutar</th>
-              <th class="centro">¿Ya está lo que va antes?</th>
-              <th class="centro">¿Cuadrilla y equipo completos?</th>
-              <th class="centro">¿Material pedido a tiempo?</th>
-              <th>Restricción pendiente</th>
-              <th class="centro">¿Ya liberada?</th>
+              <th>Período</th>
+              <th>Fecha de Entrega</th>
+              <th class="centro">Rubros</th>
+              <th class="centro">Nota del Plan</th>
+              <th class="centro">Estado</th>
+              <th class="centro">Acción</th>
             </tr>
           </thead>
-          <tbody id="rubros"></tbody>
+          <tbody id="historial-planes">
+            <tr><td colspan="6" class="centro"><small>Cargando historial…</small></td></tr>
+          </tbody>
         </table>
       </div>
-      <button type="submit">Entregar plan</button>
-    </form>
-
-    <section id="resultado" class="resultado" hidden aria-live="polite"></section>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -62,7 +110,9 @@
     const proyecto = document.getElementById('proyecto');
     const inicio = document.getElementById('inicio');
     const cuerpo = document.getElementById('rubros');
-    const resultado = document.getElementById('resultado');
+    const contador = document.getElementById('contador-seleccionados');
+    const historialCuerpo = document.getElementById('historial-planes');
+    const subHistorial = document.getElementById('sub-historial');
 
     const proximoLunes = () => {
       const hoy = new Date();
@@ -71,38 +121,116 @@
     };
 
     const casilla = (nombre, rubro, pregunta) =>
-      `<td class="centro"><input type="checkbox" name="${nombre}" aria-label="${h(pregunta)}: ${h(rubro)}"></td>`;
+      `<td class="centro"><input type="checkbox" name="${nombre}" checked aria-label="${h(pregunta)}: ${h(rubro)}"></td>`;
+
+    function actualizarContador() {
+      const seleccionados = [...cuerpo.querySelectorAll('input[name="cantidad"]')]
+        .filter(inp => Number(inp.value) > 0).length;
+      contador.textContent = `${seleccionados} ${seleccionados === 1 ? 'rubro seleccionado' : 'rubros seleccionados'}`;
+      contador.className = `etiqueta ${seleccionados > 0 ? 'ok' : 'alerta'}`;
+    }
 
     async function cargarRubros() {
+      cuerpo.innerHTML = '<tr><td colspan="7" class="centro"><small>Cargando rubros de la obra…</small></td></tr>';
       const rubros = await leer(db.from('rubro').select('*').eq('proyecto', proyecto.value).order('item'));
       cuerpo.innerHTML = rubros.map(r => {
         const nombre = `${r.item} · ${r.descripcion}`;
         return `<tr data-id="${r.id}">
-          <td><b>${h(nombre)}</b><small>Contrato ${numero(r.cantidad_contrato)} ${h(r.unidad)} · rinde ${numero(r.rendimiento_dia)} ${h(r.unidad)}/día · cronograma ${fecha(r.inicio)} al ${fecha(r.fin)}</small></td>
-          <td class="cant"><input type="number" name="cantidad" min="0" step="any" inputmode="decimal" aria-label="Cantidad de ${h(nombre)}"> ${h(r.unidad)}</td>
+          <td>
+            <b>${h(r.item)} · ${h(r.descripcion)}</b>
+            <small>Contrato: ${numero(r.cantidad_contrato)} ${h(r.unidad)} | Rinde: ${numero(r.rendimiento_dia)} ${h(r.unidad)}/día | Cronograma: ${fecha(r.inicio)} al ${fecha(r.fin)}</small>
+          </td>
+          <td class="cant">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <input type="number" name="cantidad" min="0" step="any" placeholder="0" oninput="actualizarContador()" aria-label="Cantidad de ${h(nombre)}">
+              <span style="font-size:12px; font-weight:600; color:var(--texto-secundario);">${h(r.unidad)}</span>
+            </div>
+          </td>
           ${casilla('secuencia', nombre, '¿Ya está lo que va antes?')}
           ${casilla('recursos', nombre, '¿Cuadrilla y equipo completos?')}
           ${casilla('anticipacion', nombre, '¿Material pedido a tiempo?')}
-          <td><input type="text" name="restriccion" placeholder="Ej.: permiso de LUG" aria-label="Restricción pendiente de ${h(nombre)}"></td>
-          ${casilla('liberada', nombre, '¿Restricción ya liberada?')}
+          <td><input type="text" name="restriccion" placeholder="Ej.: permiso de LUG o plano"></td>
+          <td class="centro"><input type="checkbox" name="liberada" aria-label="Restricción liberada"></td>
         </tr>`;
-      }).join('') || '<tr><td colspan="7"><small>Este proyecto no tiene rubros cargados.</small></td></tr>';
+      }).join('') || '<tr><td colspan="7" class="centro"><small>Este proyecto no tiene rubros cargados.</small></td></tr>';
+      actualizarContador();
+      await cargarHistorialPlanes();
     }
 
-    function mostrar(plan, nombreProyecto) {
+    async function cargarHistorialPlanes() {
+      const planes = await leer(db.from('v_plan').select('*').eq('proyecto', proyecto.value).order('inicio', { ascending: false }));
+      subHistorial.textContent = `${planes.length} planes encontrados`;
+      if (!planes.length) {
+        historialCuerpo.innerHTML = '<tr><td colspan="6" class="centro"><small>Aún no hay planes entregados para este proyecto.</small></td></tr>';
+        return;
+      }
+      historialCuerpo.innerHTML = planes.map(p => {
+        const [textoNivel, claseNivel] = nivel(p.nota);
+        return `
+          <tr>
+            <td><b>${periodo(p.inicio)}</b></td>
+            <td>${fecha(p.entregado)}</td>
+            <td class="centro">${p.tareas}</td>
+            <td class="centro"><span class="etiqueta ${claseNivel}"><b>${p.nota}</b> · ${textoNivel}</span></td>
+            <td class="centro">${p.cerrado ? '<span class="etiqueta ok">Cerrado</span>' : '<span class="etiqueta alerta">Abierto</span>'}</td>
+            <td class="centro">
+              ${p.cerrado 
+                ? '<a href="index.html" class="btn btn-secundario btn-sm">Ver en Tablero</a>' 
+                : `<a href="cierre.html?plan_id=${p.id}" class="btn btn-primario btn-sm">▶ Cerrar en Tiempo 2</a>`
+              }
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function mostrarModalExito(plan, nombreProyecto) {
       const [texto, clase] = nivel(plan.nota);
-      resultado.innerHTML = `
-        <div>Plan entregado · ${h(nombreProyecto)} · ${periodo(plan.inicio)}</div>
-        <div class="grande">${plan.nota} <span class="etiqueta ${clase}">${texto}</span></div>
-        <p class="sub">Nota del plan: ${META.nota} o más es buen plan; de ${META.revisar} a ${META.nota - 1}, revisar; menos de ${META.revisar}, rehacer.</p>
-        ${CRITERIOS.map(([campo, nombre, pregunta]) => `
-          <div class="barra-dato"><span>${nombre}<small>${pregunta}</small></span>
-            <div class="pista"><span class="${plan[campo] >= META.nota ? 'ok' : 'mal'}" style="width:${plan[campo]}%"></span></div>
-            <b>${plan[campo]} %</b></div>`).join('')}
-        <p>Restricciones liberadas: <b>${plan.restricciones ? `${plan.liberadas} de ${plan.restricciones}` : 'no hay restricciones'}</b></p>
-        <p><a href="index.html">Ver el tablero</a> · <a href="cierre.html">Cerrar este plan a las 2 semanas</a></p>`;
-      resultado.hidden = false;
-      resultado.scrollIntoView({ behavior: 'smooth' });
+      const html = `
+        <div style="text-align:center; padding:10px 0 20px;">
+          <div style="font-size:48px; margin-bottom:8px;">🎉</div>
+          <div style="font-size:18px; font-weight:700; color:var(--primario);">¡Plan Entregado y Calificado con Éxito!</div>
+          <p class="sub">${h(nombreProyecto)} · Período: <b>${periodo(plan.inicio)}</b></p>
+          
+          <div style="margin:20px 0; padding:16px; background:#f8fafc; border-radius:12px; border:1px solid var(--borde);">
+            <div style="font-size:12px; text-transform:uppercase; font-weight:700; color:var(--texto-apagado);">Calificación de Calidad del Plan</div>
+            <div style="font-size:46px; font-weight:900; margin:4px 0;" class="kpi ${clase}">
+              ${plan.nota} <span style="font-size:20px; font-weight:600;">/ 100</span>
+            </div>
+            <div><span class="etiqueta ${clase}" style="font-size:14px; padding:4px 14px;">${texto}</span></div>
+          </div>
+        </div>
+
+        <h4 style="margin:0 0 10px; font-size:14px;">Desglose de los 6 criterios auditados:</h4>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${CRITERIOS.map(([campo, nom, preg]) => `
+            <div class="barra-dato" style="grid-template-columns: 160px 1fr 45px;">
+              <span><b>${nom}</b><small>${preg}</small></span>
+              <div class="pista">
+                <span class="${plan[campo] >= META.nota ? 'ok' : 'mal'}" style="width:${plan[campo]}%"></span>
+              </div>
+              <b style="text-align:right;">${plan[campo]}%</b>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="margin-top:16px; padding:12px; background:#f1f5f9; border-radius:8px; font-size:13px;">
+          Restricciones identificadas: <b>${plan.restricciones ? `${plan.liberadas} de ${plan.restricciones} liberadas` : 'Ninguna restricción crítica pendiente.'}</b>
+        </div>
+      `;
+
+      const botones = `
+        <a href="cierre.html?plan_id=${plan.id}" class="btn btn-primario">⏱️ Ir a Tiempo 2 (Cierre)</a>
+        <a href="index.html" class="btn btn-secundario">📊 Ver en Tablero</a>
+        <button type="button" class="btn btn-secundario" onclick="cerrarModal()">➕ Planificar otro</button>
+      `;
+
+      abrirModal({
+        titulo: '✅ Plan Registrado en Supabase',
+        contenidoHtml: html,
+        botonesHtml: botones,
+        anchoMax: '600px'
+      });
     }
 
     form.addEventListener('submit', async evento => {
@@ -120,21 +248,24 @@
           restriccion: campo('restriccion').value,
           liberada: campo('liberada').checked,
         }));
-      if (!inicio.value) return avisar('Elige el lunes de inicio.');
-      if (dia(inicio.value).getDay() !== 1) return avisar('El plan tiene que empezar un lunes.');
-      if (!tareas.length) return avisar('Pon la cantidad de al menos un rubro.');
 
-      const boton = form.querySelector('button');
+      if (!inicio.value) return avisar('Por favor selecciona el lunes de inicio.');
+      if (dia(inicio.value).getDay() !== 1) return avisar('El plan tiene que empezar un día lunes.');
+      if (!tareas.length) return avisar('Ingresa la cantidad a ejecutar de al menos un rubro para generar el plan.');
+
+      const boton = document.getElementById('btn-enviar');
       boton.disabled = true;
+      boton.textContent = '⏳ Calificando y guardando plan…';
       try {
         const id = await leer(db.rpc('crear_plan', { p_proyecto: proyecto.value, p_inicio: inicio.value, p_tareas: tareas }));
         const plan = await leer(db.from('v_plan').select('*').eq('id', id).single());
-        mostrar(plan, proyecto.selectedOptions[0].textContent);
+        mostrarModalExito(plan, proyecto.selectedOptions[0].textContent);
         await cargarRubros();
       } catch (error) {
         fallo(error);
       } finally {
         boton.disabled = false;
+        boton.textContent = '🚀 Entregar y Calificar Plan';
       }
     });
 
@@ -143,7 +274,14 @@
     (async () => {
       inicio.value = proximoLunes();
       const proyectos = await leer(db.from('proyecto').select('*').neq('estado', 'En cierre').order('codigo'));
-      proyecto.innerHTML = proyectos.map(p => `<option value="${h(p.codigo)}">${h(p.codigo)} · ${h(p.nombre)}</option>`).join('');
+      proyecto.innerHTML = proyectos.map(p => `<option value="${h(p.codigo)}">${h(p.codigo)} · ${h(p.nombre)} (${h(p.supervisor)})</option>`).join('');
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const proyParam = urlParams.get('proyecto');
+      if (proyParam && proyectos.some(p => p.codigo === proyParam)) {
+        proyecto.value = proyParam;
+      }
+      
       await cargarRubros();
     })().catch(fallo);
   </script>

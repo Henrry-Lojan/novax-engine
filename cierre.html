@@ -8,145 +8,364 @@
 </head>
 <body>
   <header class="barra">
-    <b>NOVAX <span>ENGINE</span></b>
+    <div class="logo-bloque">
+      <b>NOVAX <span>ENGINE</span></b>
+      <span class="chip-status">En vivo · Supabase</span>
+    </div>
     <nav aria-label="Secciones">
-      <a href="index.html">Tablero</a>
-      <a href="plan.html">Tiempo 1 · Plan</a>
-      <a href="cierre.html" aria-current="page">Tiempo 2 · Cierre</a>
+      <a href="index.html">📊 Tablero Ejecutivo</a>
+      <a href="plan.html">⏱️ Tiempo 1 · Plan</a>
+      <a href="cierre.html" aria-current="page">✅ Tiempo 2 · Cierre</a>
     </nav>
   </header>
 
   <main>
-    <h1>Tiempo 2 · Cerrar el plan</h1>
-    <p class="sub">A las 2 semanas: anota lo ejecutado de cada rubro. Si no llegó a lo planificado, elige la causa y los
-      días de atraso.</p>
+    <div class="encabezado-pagina">
+      <div>
+        <h1>Tiempo 2 · Cierre de Plan y Medición de Cumplimiento (PPC)</h1>
+        <p class="sub">A las 2 semanas: el supervisor registra la cantidad real ejecutada. El sistema calcula el <b>PPC</b> y clasifica automáticamente si los atrasos fueron por <b>fallas evitables</b> (gestión interna) o <b>causas externas</b> (sustento de reclamo SDC).</p>
+      </div>
+      <div>
+        <button type="button" class="btn btn-secundario btn-sm" onclick="explicarKpi('ppc')">ℹ️ ¿Cómo se interpreta el PPC?</button>
+      </div>
+    </div>
+
     <p id="aviso" class="aviso" role="alert" hidden></p>
 
-    <form id="form" novalidate>
-      <div class="fila">
-        <label>Plan abierto
-          <select id="plan" required></select>
-        </label>
+    <!-- SELECCIÓN Y FILTRO DE PLANES -->
+    <div class="formulario-tarjeta">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+        <h3 style="margin:0; font-size:16px;">1. Selecciona el Plan que deseas cerrar</h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label for="filtro-proyecto" style="margin:0; font-size:13px; color:var(--texto-secundario);">Filtrar por obra:</label>
+          <select id="filtro-proyecto" style="min-width:220px; font-size:13px; padding:6px 10px;" onchange="filtrarPlanes()">
+            <option value="todos">Todas las obras</option>
+          </select>
+        </div>
       </div>
 
-      <div class="tabla">
-        <table>
-          <thead>
-            <tr>
-              <th>Rubro</th>
-              <th>Planificado</th>
-              <th>Ejecutado</th>
-              <th>Si no se cumplió: causa</th>
-              <th>Días de atraso</th>
-            </tr>
-          </thead>
-          <tbody id="tareas"></tbody>
-        </table>
+      <!-- Tarjetas de planes abiertos -->
+      <div id="contenedor-planes-abiertos" class="rejilla-planes">
+        <p style="color:var(--texto-secundario); font-size:14px;">Buscando planes abiertos en Supabase…</p>
       </div>
-      <button type="submit">Cerrar plan</button>
+    </div>
+
+    <!-- FORMULARIO DE CIERRE DEL PLAN SELECCIONADO -->
+    <form id="form-cierre" class="formulario-tarjeta" style="margin-top:24px;" hidden novalidate>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid var(--borde); padding-bottom:14px; flex-wrap:wrap; gap:12px;">
+        <div>
+          <span class="etiqueta ok" id="badge-proyecto-seleccionado">1213 · Truck Shop Area</span>
+          <h2 id="titulo-plan-seleccionado" style="margin:8px 0 4px; font-size:20px;">Cerrando plan del 16 nov al 27 nov</h2>
+          <p id="meta-plan-seleccionado" class="sub"></p>
+        </div>
+        <button type="button" class="btn btn-secundario btn-sm" onclick="deseleccionarPlan()">← Cambiar de plan</button>
+      </div>
+
+      <div class="tabla-tarjeta">
+        <div class="tabla-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Rubro de Obra</th>
+                <th class="centro" style="min-width:130px;">Meta Planificada</th>
+                <th style="min-width:160px;">Cantidad Real Ejecutada</th>
+                <th style="min-width:260px;">Si no llegó al 100%: Causa de No Cumplimiento</th>
+                <th class="centro" style="min-width:120px;">Días de Atraso</th>
+              </tr>
+            </thead>
+            <tbody id="tareas"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:12px;">
+        <small style="color:var(--texto-secundario)">* Los rubros con cantidad ejecutada inferior a la planificada requieren especificar la causa.</small>
+        <button type="submit" id="btn-cerrar" class="btn btn-primario" style="font-size:15px; padding:12px 28px;">
+          💾 Registrar Cierre y Calcular PPC
+        </button>
+      </div>
     </form>
-
-    <section id="resultado" class="resultado" hidden aria-live="polite"></section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script>
-    const form = document.getElementById('form');
-    const selector = document.getElementById('plan');
-    const cuerpo = document.getElementById('tareas');
-    const resultado = document.getElementById('resultado');
-    let opcionesCausa = '';
+    const filtroProyecto = document.getElementById('filtro-proyecto');
+    const contenedorPlanes = document.getElementById('contenedor-planes-abiertos');
+    const formCierre = document.getElementById('form-cierre');
+    const badgeProyecto = document.getElementById('badge-proyecto-seleccionado');
+    const tituloPlan = document.getElementById('titulo-plan-seleccionado');
+    const metaPlan = document.getElementById('meta-plan-seleccionado');
+    const cuerpoTareas = document.getElementById('tareas');
+    const btnCerrar = document.getElementById('btn-cerrar');
 
-    async function cargarPlanes() {
-      const planes = await leer(db.from('v_plan').select('*').eq('cerrado', false).order('inicio'));
-      selector.innerHTML = planes.map(p =>
-        `<option value="${p.id}">${h(p.proyecto)} · ${periodo(p.inicio)} · ${p.tareas} rubros</option>`).join('');
-      form.hidden = !planes.length;
-      if (!planes.length) {
-        cuerpo.innerHTML = '';
-        return avisar('No hay planes abiertos. Entrega uno en «Tiempo 1 · Plan».', 'ok');
+    let todosLosPlanesAbiertos = [];
+    let planSeleccionadoId = null;
+    let causasDisponibles = [];
+
+    async function inicializar() {
+      try {
+        // Cargar causas
+        causasDisponibles = await leer(db.from('causa').select('*').order('tipo').order('nombre'));
+
+        // Cargar proyectos en el filtro
+        const proyectos = await leer(db.from('proyecto').select('*').order('codigo'));
+        filtroProyecto.innerHTML = '<option value="todos">Todas las obras</option>' +
+          proyectos.map(p => `<option value="${h(p.codigo)}">${h(p.codigo)} · ${h(p.nombre)}</option>`).join('');
+
+        await recargarPlanes();
+
+        // Si viene un plan_id en la URL, seleccionarlo automáticamente
+        const urlParams = new URLSearchParams(window.location.search);
+        const planParam = urlParams.get('plan_id');
+        if (planParam) {
+          seleccionarPlan(Number(planParam));
+        }
+      } catch (err) {
+        fallo(err);
       }
-      await cargarTareas();
     }
 
-    async function cargarTareas() {
-      const tareas = await leer(db.from('v_tarea').select('*').eq('plan_id', selector.value).order('item'));
-      cuerpo.innerHTML = tareas.map(t => {
-        const nombre = `${t.item} · ${t.descripcion}`;
-        return `<tr data-id="${t.id}" data-plan="${t.cantidad_plan}">
-          <td><b>${h(nombre)}</b>${t.restriccion ? `<small>Restricción: ${h(t.restriccion)}</small>` : ''}</td>
-          <td>${numero(t.cantidad_plan)} ${h(t.unidad)}</td>
-          <td class="cant"><input type="number" name="real" min="0" step="any" inputmode="decimal" required aria-label="Ejecutado de ${h(nombre)}"> ${h(t.unidad)}</td>
-          <td><select name="causa" aria-label="Causa de ${h(nombre)}"><option value="">—</option>${opcionesCausa}</select></td>
-          <td><input type="number" name="dias" min="0" step="1" value="0" aria-label="Días de atraso de ${h(nombre)}"></td>
-        </tr>`;
+    async function recargarPlanes() {
+      todosLosPlanesAbiertos = await leer(db.from('v_plan').select('*').eq('cerrado', false).order('inicio', { ascending: false }));
+      filtrarPlanes();
+    }
+
+    function filtrarPlanes() {
+      const proy = filtroProyecto.value;
+      const planesFiltrados = proy === 'todos' 
+        ? todosLosPlanesAbiertos 
+        : todosLosPlanesAbiertos.filter(p => p.proyecto === proy);
+
+      if (!planesFiltrados.length) {
+        contenedorPlanes.innerHTML = `
+          <div style="grid-column: 1 / -1; padding:24px; text-align:center; background:#f8fafc; border-radius:12px; border:1px dashed var(--borde);">
+            <p style="margin:0 0 8px; font-weight:600; color:var(--primario);">No hay planes pendientes de cierre para esta selección.</p>
+            <p class="sub" style="margin:0 0 16px;">¿Deseas registrar un nuevo plan quincenal?</p>
+            <a href="plan.html" class="btn btn-primario btn-sm">➕ Ir a Tiempo 1 (Entregar Plan)</a>
+          </div>
+        `;
+        return;
+      }
+
+      contenedorPlanes.innerHTML = planesFiltrados.map(p => {
+        const [textoNota, claseNota] = nivel(p.nota);
+        const esSeleccionado = planSeleccionadoId === p.id;
+        return `
+          <div class="tarjeta-plan ${esSeleccionado ? 'seleccionada' : ''}">
+            <div class="tarjeta-plan-header">
+              <span class="etiqueta ${claseNota}"><b>${p.nota} pts</b> · ${textoNota}</span>
+              <span class="chip-status" style="background:#f1f5f9; color:var(--texto-secundario); font-size:11px;">Pendiente</span>
+            </div>
+            <div>
+              <h4 class="tarjeta-plan-titulo">Obra: ${h(p.proyecto)}</h4>
+              <div class="tarjeta-plan-meta">Período: <b>${periodo(p.inicio)}</b></div>
+              <div class="tarjeta-plan-meta">${p.tareas} rubros a evaluar</div>
+            </div>
+            <div>
+              <button type="button" class="btn ${esSeleccionado ? 'btn-exito' : 'btn-primario'} btn-sm" style="width:100%;" onclick="seleccionarPlan(${p.id})">
+                ${esSeleccionado ? '✓ Plan en pantalla de cierre' : '▶ Cerrar este Plan'}
+              </button>
+            </div>
+          </div>
+        `;
       }).join('');
     }
 
-    function mostrar(plan) {
-      const ppc = pct(plan.cumplidas, plan.tareas);
-      resultado.innerHTML = `
-        <div>Plan cerrado · ${h(plan.proyecto)} · ${periodo(plan.inicio)}</div>
-        <div class="grande">PPC ${ppc} % <span class="etiqueta ${ppc >= META.ppc ? 'ok' : 'mal'}">meta ${META.ppc} %</span></div>
-        <p>${plan.cumplidas} de ${plan.tareas} rubros cumplidos · cantidades al ${pct(plan.valor_real, plan.valor_plan)} %
-          · ${plan.evitables} por causa evitable · ${plan.externas} por causa externa (${plan.dias_externos} días documentados)</p>
-        <p><b>${h(lectura(plan))}</b></p>
-        <p><a href="index.html">Ver el tablero</a></p>`;
-      resultado.hidden = false;
-      resultado.scrollIntoView({ behavior: 'smooth' });
+    async function seleccionarPlan(id) {
+      planSeleccionadoId = id;
+      filtrarPlanes();
+
+      const plan = todosLosPlanesAbiertos.find(p => p.id === id);
+      if (!plan) return;
+
+      badgeProyecto.textContent = `Proyecto ${plan.proyecto}`;
+      tituloPlan.textContent = `Cierre del Lookahead · ${periodo(plan.inicio)}`;
+      const [textoNota, claseNota] = nivel(plan.nota);
+      metaPlan.innerHTML = `Nota obtenida en Tiempo 1: <b>${plan.nota}/100</b> (<span class="${claseNota}">${textoNota}</span>) · Total de rubros comprometidos: <b>${plan.tareas}</b>`;
+
+      formCierre.hidden = false;
+      cuerpoTareas.innerHTML = '<tr><td colspan="5" class="centro"><small>Cargando rubros del plan…</small></td></tr>';
+      formCierre.scrollIntoView({ behavior: 'smooth' });
+
+      const tareas = await leer(db.from('v_tarea').select('*').eq('plan_id', id).order('item'));
+
+      const opcionesEvitables = causasDisponibles.filter(c => c.tipo === 'evitable')
+        .map(c => `<option value="${c.codigo}">[Evitable] ${h(c.nombre)}</option>`).join('');
+      const opcionesExternas = causasDisponibles.filter(c => c.tipo === 'externa')
+        .map(c => `<option value="${c.codigo}">[Externa] ${h(c.nombre)}</option>`).join('');
+
+      cuerpoTareas.innerHTML = tareas.map(t => {
+        const nombre = `${t.item} · ${t.descripcion}`;
+        return `
+          <tr data-id="${t.id}" data-plan="${t.cantidad_plan}">
+            <td>
+              <b>${h(t.item)} · ${h(t.descripcion)}</b>
+              ${t.restriccion ? `<small style="color:var(--alerta)">⚠️ Restricción inicial: ${h(t.restriccion)}</small>` : ''}
+            </td>
+            <td class="centro">
+              <b>${numero(t.cantidad_plan)}</b> <span style="font-size:12px; color:var(--texto-secundario);">${h(t.unidad)}</span>
+            </td>
+            <td>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <input type="number" name="real" min="0" step="any" placeholder="0" required oninput="evaluarFila(this)" aria-label="Cantidad ejecutada de ${h(nombre)}">
+                <span style="font-size:12px; font-weight:600; color:var(--texto-secundario);">${h(t.unidad)}</span>
+              </div>
+            </td>
+            <td>
+              <select name="causa" disabled aria-label="Causa de incumplimiento">
+                <option value="">— Rubro cumplido al 100% —</option>
+                <optgroup label="⚠️ Causas Evitables (Gestión Interna)">
+                  ${opcionesEvitables}
+                </optgroup>
+                <optgroup label="☔ Causas Externas (Sustento SDC)">
+                  ${opcionesExternas}
+                </optgroup>
+              </select>
+            </td>
+            <td class="centro">
+              <input type="number" name="dias" min="0" step="1" value="0" disabled style="width:75px; text-align:center;">
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    form.addEventListener('submit', async evento => {
+    function deseleccionarPlan() {
+      planSeleccionadoId = null;
+      formCierre.hidden = true;
+      filtrarPlanes();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function evaluarFila(input) {
+      const fila = input.closest('tr');
+      const plan = Number(fila.dataset.plan);
+      const real = Number(input.value);
+      const selectCausa = fila.querySelector('select[name="causa"]');
+      const inputDias = fila.querySelector('input[name="dias"]');
+
+      if (input.value !== '' && real < plan) {
+        // No cumplido
+        fila.style.background = '#fffbeb';
+        selectCausa.disabled = false;
+        selectCausa.required = true;
+        inputDias.disabled = false;
+        if (selectCausa.value === '') {
+          selectCausa.options[0].textContent = '⚠️ Selecciona la causa de atraso';
+        }
+      } else {
+        // Cumplido
+        fila.style.background = '';
+        selectCausa.disabled = true;
+        selectCausa.required = false;
+        selectCausa.value = '';
+        selectCausa.options[0].textContent = '✓ Rubro cumplido al 100%';
+        inputDias.disabled = true;
+        inputDias.value = '0';
+      }
+    }
+
+    function mostrarModalResultadoCierre(plan) {
+      const ppc = pct(plan.cumplidas, plan.tareas);
+      const esExito = ppc >= META.ppc;
+
+      const html = `
+        <div style="text-align:center; padding:10px 0 20px;">
+          <div style="font-size:48px; margin-bottom:8px;">${esExito ? '🏆' : '⚠️'}</div>
+          <div style="font-size:18px; font-weight:700; color:var(--primario);">¡Plan Cerrado y Evaluado con Éxito!</div>
+          <p class="sub">Proyecto: <b>${h(plan.proyecto)}</b> · Período: <b>${periodo(plan.inicio)}</b></p>
+          
+          <div style="margin:20px 0; padding:16px; background:#f8fafc; border-radius:12px; border:1px solid var(--borde);">
+            <div style="font-size:12px; text-transform:uppercase; font-weight:700; color:var(--texto-apagado);">PPC (Porcentaje de Plan Cumplido)</div>
+            <div style="font-size:46px; font-weight:900; margin:4px 0; color:${esExito ? 'var(--ok)' : 'var(--mal)'}">
+              ${ppc} %
+            </div>
+            <div>
+              <span class="etiqueta ${esExito ? 'ok' : 'mal'}" style="font-size:14px; padding:4px 14px;">
+                Meta: ≥ ${META.ppc}% · ${plan.cumplidas} de ${plan.tareas} rubros cumplidos
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glosario-caja" style="margin-bottom:14px;">
+          <div class="glosario-fila destacada">
+            <span class="glosario-etiqueta">Diagnóstico Ejecutivo:</span>
+            <div style="font-weight:700; font-size:15px; color:var(--primario); margin-top:2px;">
+              ${h(lectura(plan))}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;">
+          <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid var(--borde);">
+            <div style="font-size:11px; text-transform:uppercase; color:var(--texto-apagado); font-weight:700;">Cumplimiento Financiero</div>
+            <div style="font-size:18px; font-weight:800; color:var(--primario); margin-top:2px;">
+              ${pct(plan.valor_real, plan.valor_plan)} %
+            </div>
+            <small>Valorización ejecutada</small>
+          </div>
+          <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid var(--borde);">
+            <div style="font-size:11px; text-transform:uppercase; color:var(--texto-apagado); font-weight:700;">Atrasos Documentados</div>
+            <div style="font-size:18px; font-weight:800; color:var(--externa); margin-top:2px;">
+              ${plan.dias_externos} días
+            </div>
+            <small>Sustento para SDC</small>
+          </div>
+        </div>
+      `;
+
+      const botones = `
+        <a href="index.html" class="btn btn-primario">📊 Ver Tablero General</a>
+        <button type="button" class="btn btn-secundario" onclick="deseleccionarPlan(); cerrarModal(); recargarPlanes();">Cerrar otro plan</button>
+      `;
+
+      abrirModal({
+        titulo: '✅ Cierre Quincenal Registrado',
+        contenidoHtml: html,
+        botonesHtml: botones,
+        anchoMax: '580px'
+      });
+    }
+
+    formCierre.addEventListener('submit', async evento => {
       evento.preventDefault();
       avisar('');
-      const filas = [...cuerpo.querySelectorAll('tr[data-id]')].map(fila => ({
 
-        id: Number(fila.dataset.id),
-        plan: Number(fila.dataset.plan),
-        real: fila.querySelector('[name="real"]'),
-        causa: fila.querySelector('[name="causa"]'),
-        dias: fila.querySelector('[name="dias"]'),
-      }));
-      const sinDato = filas.find(f => f.real.value === '' || Number(f.real.value) < 0);
-      if (sinDato) {
-        sinDato.real.focus();
-        return avisar('Falta lo ejecutado de algún rubro (pon 0 si no se hizo nada).');
-      }
-      const sinCausa = filas.find(f => Number(f.real.value) < f.plan && !f.causa.value);
-      if (sinCausa) {
-        sinCausa.causa.focus();
-        return avisar('Elige la causa de los rubros que no llegaron a lo planificado.');
+      const tareas = [...cuerpoTareas.querySelectorAll('tr[data-id]')].map(fila => {
+        const campoReal = fila.querySelector('input[name="real"]');
+        const campoCausa = fila.querySelector('select[name="causa"]');
+        const campoDias = fila.querySelector('input[name="dias"]');
+        return {
+          id: Number(fila.dataset.id),
+          real: campoReal.value === '' ? null : Number(campoReal.value),
+          causa: campoCausa.value || null,
+          dias: Number(campoDias.value || 0),
+        };
+      });
+
+      if (tareas.some(t => t.real === null)) {
+        return avisar('Por favor ingresa la cantidad real ejecutada en todos los rubros.');
       }
 
-      const boton = form.querySelector('button');
-      boton.disabled = true;
+      btnCerrar.disabled = true;
+      btnCerrar.textContent = '⏳ Calculando PPC y guardando…';
+
       try {
-        const id = Number(selector.value);
-        await leer(db.rpc('cerrar_plan', {
-          p_plan: id,
-          p_tareas: filas.map(f => ({ id: f.id, real: Number(f.real.value), causa: f.causa.value, dias: Number(f.dias.value) || 0 })),
-        }));
-        mostrar(await leer(db.from('v_plan').select('*').eq('id', id).single()));
-        await cargarPlanes();
+        await leer(db.rpc('cerrar_plan', { p_plan: planSeleccionadoId, p_tareas: tareas }));
+        const planActualizado = await leer(db.from('v_plan').select('*').eq('id', planSeleccionadoId).single());
+        mostrarModalResultadoCierre(planActualizado);
       } catch (error) {
         fallo(error);
       } finally {
-        boton.disabled = false;
+        btnCerrar.disabled = false;
+        btnCerrar.textContent = '💾 Registrar Cierre y Calcular PPC';
       }
     });
 
-    selector.addEventListener('change', () => cargarTareas().catch(fallo));
-
-    (async () => {
-      const causas = await leer(db.from('causa').select('*').order('tipo').order('nombre'));
-      opcionesCausa = ['evitable', 'externa'].map(tipo =>
-        `<optgroup label="${tipo === 'evitable' ? 'Evitables (nuestras)' : 'Externas (se reclaman)'}">${causas
-          .filter(c => c.tipo === tipo)
-          .map(c => `<option value="${h(c.codigo)}">${h(c.nombre)}: ${h(c.detalle)}</option>`).join('')}</optgroup>`).join('');
-      await cargarPlanes();
-    })().catch(fallo);
+    inicializar();
   </script>
 </body>
 </html>
