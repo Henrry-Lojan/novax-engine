@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Novax Engine · Tablero</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="barra">
+    <b>NOVAX <span>ENGINE</span></b>
+    <nav aria-label="Secciones">
+      <a href="index.html" aria-current="page">Tablero</a>
+      <a href="plan.html">Tiempo 1 · Plan</a>
+      <a href="cierre.html">Tiempo 2 · Cierre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Tablero de las obras</h1>
+    <p class="sub" id="sub">Cargando…</p>
+    <p id="aviso" class="aviso" role="alert" hidden></p>
+
+    <section class="kpis" id="kpis" aria-label="Indicadores principales"></section>
+
+    <h2>Estado por proyecto</h2>
+    <div class="tabla">
+      <table>
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Tiempo 1 · plan vigente</th>
+            <th class="centro">Nota</th>
+            <th class="centro">Restricciones liberadas</th>
+            <th>Tiempo 2 · último cierre</th>
+            <th class="centro">PPC</th>
+            <th class="centro">Cantidades</th>
+            <th>Lectura</th>
+          </tr>
+        </thead>
+        <tbody id="proyectos"></tbody>
+      </table>
+    </div>
+
+    <div class="dos">
+      <section>
+        <h2>PPC por período (meta <span id="meta-ppc"></span> %)</h2>
+        <div class="caja" id="tendencia"></div>
+      </section>
+      <section>
+        <h2>¿Por qué no se cumplió?</h2>
+        <div class="caja" id="causas"></div>
+      </section>
+    </div>
+
+    <h2>Atrasos externos documentados (sustento para SDC)</h2>
+    <div class="tabla">
+      <table>
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Período</th>
+            <th>Rubro</th>
+            <th>Planificado / ejecutado</th>
+            <th>Causa</th>
+            <th class="centro">Días</th>
+          </tr>
+        </thead>
+        <tbody id="evidencia"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const kpi = (tiempo, nombre, valor, meta, bien) =>
+      `<div class="kpi ${valor === null ? '' : bien ? 'ok' : 'mal'}">
+         <div class="tiempo">${tiempo}</div><div>${nombre}</div>
+         <div class="valor">${valor === null ? '—' : valor}</div><div class="meta">${meta}</div>
+       </div>`;
+
+    const barra = (etiqueta, texto, ancho, clase = '', meta = null) =>
+      `<div class="barra-dato"><span>${etiqueta}</span>
+         <div class="pista"><span class="${clase}" style="width:${ancho ?? 0}%"></span>${meta === null ? '' : `<i style="left:${meta}%"></i>`}</div>
+         <b>${texto}</b></div>`;
+
+    async function cargar() {
+      const [proyectos, planes, fallas] = await Promise.all([
+        leer(db.from('proyecto').select('*').order('codigo')),
+        leer(db.from('v_plan').select('*').order('inicio')),
+        leer(db.from('v_tarea').select('*').eq('cerrado', true).eq('cumplida', false).order('inicio')),
+      ]);
+
+      const ultimo = (codigo, soloCerrados) =>
+        planes.filter(p => p.proyecto === codigo && (!soloCerrados || p.cerrado)).at(-1);
+      const vigentes = proyectos.map(p => ultimo(p.codigo, false)).filter(Boolean);
+      const cierres = proyectos.map(p => ultimo(p.codigo, true)).filter(Boolean);
+      const externas = fallas.filter(f => f.causa_tipo === 'externa');
+
+      const nota = vigentes.length ? Math.round(suma(vigentes, 'nota') / vigentes.length) : null;
+      const liberadas = pct(suma(vigentes, 'liberadas'), suma(vigentes, 'restricciones'));
+      const ppc = pct(suma(cierres, 'cumplidas'), suma(cierres, 'tareas'));
+      const cantidades = pct(suma(cierres, 'valor_real'), suma(cierres, 'valor_plan'));
+      const evitables = pct(suma(cierres, 'evitables'), suma(cierres, 'tareas'));
+      const dias = suma(externas, 'dias_atraso');
+
+      document.getElementById('sub').textContent =
+        `${proyectos.length} proyectos · ${planes.length} planes · actualizado ${new Date().toLocaleString('es-EC')}`;
+      document.getElementById('meta-ppc').textContent = META.ppc;
+
+      document.getElementById('kpis').innerHTML = [
+        kpi('Tiempo 1', 'Nota del plan', nota, `meta ≥ ${META.nota}`, nota >= META.nota),
+        kpi('Tiempo 1', 'Restricciones liberadas', liberadas === null ? null : `${liberadas} %`, `meta ≥ ${META.liberadas} %`, liberadas >= META.liberadas),
+        kpi('Tiempo 2', 'PPC del portafolio', ppc === null ? null : `${ppc} %`, `meta ≥ ${META.ppc} %`, ppc >= META.ppc),
+        kpi('Tiempo 2', 'Cumplimiento de cantidades', cantidades === null ? null : `${cantidades} %`, `meta ≥ ${META.cantidades} %`, cantidades >= META.cantidades),
+        kpi('Tiempo 2', 'Fallas evitables', evitables === null ? null : `${evitables} %`, `meta < ${META.evitables} %`, evitables < META.evitables),
+        `<div class="kpi"><div class="tiempo">Evidencia</div><div>Atraso externo</div><div class="valor">${dias} días</div><div class="meta">documentado para SDC</div></div>`,
+      ].join('');
+
+      document.getElementById('proyectos').innerHTML = proyectos.map(p => {
+        const vigente = ultimo(p.codigo, false);
+        const cierre = ultimo(p.codigo, true);
+        const nombre = `<b>${h(p.codigo)} · ${h(p.nombre)}</b><small>${h(p.supervisor)} · ${h(p.estado)}</small>`;
+        if (!vigente) return `<tr><td>${nombre}</td><td colspan="7"><small>Sin planes registrados</small></td></tr>`;
+        const [texto, clase] = nivel(vigente.nota);
+        const ppcCierre = cierre && pct(cierre.cumplidas, cierre.tareas);
+        return `<tr>
+          <td>${nombre}</td>
+          <td>${periodo(vigente.inicio)}<small>${vigente.cerrado ? 'cerrado' : 'en curso'} · ${vigente.tareas} rubros</small></td>
+          <td class="centro"><b>${vigente.nota}</b><br><span class="etiqueta ${clase}">${texto}</span></td>
+          <td class="centro">${vigente.restricciones ? `${vigente.liberadas} de ${vigente.restricciones}` : '—'}</td>
+          <td>${cierre ? `${periodo(cierre.inicio)}<small>${cierre.cumplidas} de ${cierre.tareas} rubros cumplidos</small>` : '<small>Aún sin cierre</small>'}</td>
+          <td class="centro">${cierre ? `<span class="etiqueta ${ppcCierre >= META.ppc ? 'ok' : 'mal'}">${ppcCierre} %</span>` : '—'}</td>
+          <td class="centro">${cierre ? `${pct(cierre.valor_real, cierre.valor_plan)} %` : '—'}</td>
+          <td>${h(lectura(cierre))}</td>
+        </tr>`;
+      }).join('');
+
+      const periodos = [...new Set(planes.filter(p => p.cerrado).map(p => p.inicio))];
+      document.getElementById('tendencia').innerHTML = periodos.map(inicio => {
+        const grupo = planes.filter(p => p.cerrado && p.inicio === inicio);
+        const valor = pct(suma(grupo, 'cumplidas'), suma(grupo, 'tareas'));
+        return barra(fecha(inicio), `${valor} %`, valor, valor >= META.ppc ? 'ok' : 'mal', META.ppc);
+      }).join('') || '<small>Todavía no hay planes cerrados.</small>';
+
+      const causas = Object.values(fallas.reduce((grupos, f) => {
+        grupos[f.causa_nombre] ??= { nombre: f.causa_nombre, tipo: f.causa_tipo, veces: 0 };
+        grupos[f.causa_nombre].veces++;
+        return grupos;
+      }, {})).sort((a, b) => b.veces - a.veces);
+      const evitablesTotal = fallas.filter(f => f.causa_tipo === 'evitable').length;
+      document.getElementById('causas').innerHTML = causas.length
+        ? causas.map(c => barra(`${h(c.nombre)} <span class="etiqueta ${c.tipo}">${c.tipo}</span>`, c.veces, pct(c.veces, fallas.length), c.tipo)).join('') +
+          `<p class="sub">${fallas.length} rubros no cumplidos en todos los cierres: ${pct(evitablesTotal, fallas.length)} % evitables (los corregimos nosotros) y ${pct(fallas.length - evitablesTotal, fallas.length)} % externas (se reclaman).</p>`
+        : '<small>Todavía no hay rubros sin cumplir.</small>';
+
+      document.getElementById('evidencia').innerHTML = externas.map(f => `<tr>
+          <td>${h(f.proyecto)}</td>
+          <td>${periodo(f.inicio)}</td>
+          <td>${h(f.item)} · ${h(f.descripcion)}${f.restriccion ? `<small>Restricción: ${h(f.restriccion)}</small>` : ''}</td>
+          <td>${numero(f.cantidad_plan)} / ${numero(f.cantidad_real)} ${h(f.unidad)}</td>
+          <td><span class="etiqueta externa">${h(f.causa_nombre)}</span></td>
+          <td class="centro">${f.dias_atraso}</td>
+        </tr>`).join('') || '<tr><td colspan="6"><small>Sin atrasos externos registrados.</small></td></tr>';
+    }
+
+    cargar().catch(fallo);
+  </script>
+</body>
+</html>

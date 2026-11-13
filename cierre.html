@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Novax Engine · Tiempo 2 · Cierre</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="barra">
+    <b>NOVAX <span>ENGINE</span></b>
+    <nav aria-label="Secciones">
+      <a href="index.html">Tablero</a>
+      <a href="plan.html">Tiempo 1 · Plan</a>
+      <a href="cierre.html" aria-current="page">Tiempo 2 · Cierre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Tiempo 2 · Cerrar el plan</h1>
+    <p class="sub">A las 2 semanas: anota lo ejecutado de cada rubro. Si no llegó a lo planificado, elige la causa y los
+      días de atraso.</p>
+    <p id="aviso" class="aviso" role="alert" hidden></p>
+
+    <form id="form" novalidate>
+      <div class="fila">
+        <label>Plan abierto
+          <select id="plan" required></select>
+        </label>
+      </div>
+
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>Rubro</th>
+              <th>Planificado</th>
+              <th>Ejecutado</th>
+              <th>Si no se cumplió: causa</th>
+              <th>Días de atraso</th>
+            </tr>
+          </thead>
+          <tbody id="tareas"></tbody>
+        </table>
+      </div>
+      <button type="submit">Cerrar plan</button>
+    </form>
+
+    <section id="resultado" class="resultado" hidden aria-live="polite"></section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const form = document.getElementById('form');
+    const selector = document.getElementById('plan');
+    const cuerpo = document.getElementById('tareas');
+    const resultado = document.getElementById('resultado');
+    let opcionesCausa = '';
+
+    async function cargarPlanes() {
+      const planes = await leer(db.from('v_plan').select('*').eq('cerrado', false).order('inicio'));
+      selector.innerHTML = planes.map(p =>
+        `<option value="${p.id}">${h(p.proyecto)} · ${periodo(p.inicio)} · ${p.tareas} rubros</option>`).join('');
+      form.hidden = !planes.length;
+      if (!planes.length) {
+        cuerpo.innerHTML = '';
+        return avisar('No hay planes abiertos. Entrega uno en «Tiempo 1 · Plan».', 'ok');
+      }
+      await cargarTareas();
+    }
+
+    async function cargarTareas() {
+      const tareas = await leer(db.from('v_tarea').select('*').eq('plan_id', selector.value).order('item'));
+      cuerpo.innerHTML = tareas.map(t => {
+        const nombre = `${t.item} · ${t.descripcion}`;
+        return `<tr data-id="${t.id}" data-plan="${t.cantidad_plan}">
+          <td><b>${h(nombre)}</b>${t.restriccion ? `<small>Restricción: ${h(t.restriccion)}</small>` : ''}</td>
+          <td>${numero(t.cantidad_plan)} ${h(t.unidad)}</td>
+          <td class="cant"><input type="number" name="real" min="0" step="any" inputmode="decimal" required aria-label="Ejecutado de ${h(nombre)}"> ${h(t.unidad)}</td>
+          <td><select name="causa" aria-label="Causa de ${h(nombre)}"><option value="">—</option>${opcionesCausa}</select></td>
+          <td><input type="number" name="dias" min="0" step="1" value="0" aria-label="Días de atraso de ${h(nombre)}"></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function mostrar(plan) {
+      const ppc = pct(plan.cumplidas, plan.tareas);
+      resultado.innerHTML = `
+        <div>Plan cerrado · ${h(plan.proyecto)} · ${periodo(plan.inicio)}</div>
+        <div class="grande">PPC ${ppc} % <span class="etiqueta ${ppc >= META.ppc ? 'ok' : 'mal'}">meta ${META.ppc} %</span></div>
+        <p>${plan.cumplidas} de ${plan.tareas} rubros cumplidos · cantidades al ${pct(plan.valor_real, plan.valor_plan)} %
+          · ${plan.evitables} por causa evitable · ${plan.externas} por causa externa (${plan.dias_externos} días documentados)</p>
+        <p><b>${h(lectura(plan))}</b></p>
+        <p><a href="index.html">Ver el tablero</a></p>`;
+      resultado.hidden = false;
+      resultado.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    form.addEventListener('submit', async evento => {
+      evento.preventDefault();
+      avisar('');
+      const filas = [...cuerpo.querySelectorAll('tr[data-id]')].map(fila => ({
+
+        id: Number(fila.dataset.id),
+        plan: Number(fila.dataset.plan),
+        real: fila.querySelector('[name="real"]'),
+        causa: fila.querySelector('[name="causa"]'),
+        dias: fila.querySelector('[name="dias"]'),
+      }));
+      const sinDato = filas.find(f => f.real.value === '' || Number(f.real.value) < 0);
+      if (sinDato) {
+        sinDato.real.focus();
+        return avisar('Falta lo ejecutado de algún rubro (pon 0 si no se hizo nada).');
+      }
+      const sinCausa = filas.find(f => Number(f.real.value) < f.plan && !f.causa.value);
+      if (sinCausa) {
+        sinCausa.causa.focus();
+        return avisar('Elige la causa de los rubros que no llegaron a lo planificado.');
+      }
+
+      const boton = form.querySelector('button');
+      boton.disabled = true;
+      try {
+        const id = Number(selector.value);
+        await leer(db.rpc('cerrar_plan', {
+          p_plan: id,
+          p_tareas: filas.map(f => ({ id: f.id, real: Number(f.real.value), causa: f.causa.value, dias: Number(f.dias.value) || 0 })),
+        }));
+        mostrar(await leer(db.from('v_plan').select('*').eq('id', id).single()));
+        await cargarPlanes();
+      } catch (error) {
+        fallo(error);
+      } finally {
+        boton.disabled = false;
+      }
+    });
+
+    selector.addEventListener('change', () => cargarTareas().catch(fallo));
+
+    (async () => {
+      const causas = await leer(db.from('causa').select('*').order('tipo').order('nombre'));
+      opcionesCausa = ['evitable', 'externa'].map(tipo =>
+        `<optgroup label="${tipo === 'evitable' ? 'Evitables (nuestras)' : 'Externas (se reclaman)'}">${causas
+          .filter(c => c.tipo === tipo)
+          .map(c => `<option value="${h(c.codigo)}">${h(c.nombre)}: ${h(c.detalle)}</option>`).join('')}</optgroup>`).join('');
+      await cargarPlanes();
+    })().catch(fallo);
+  </script>
+</body>
+</html>

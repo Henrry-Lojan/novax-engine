@@ -1,0 +1,85 @@
+:root {
+  --negro: #141414;
+  --rojo: #c8102e;
+  --blanco: #ffffff;
+  --fondo: #f4f4f5;
+  --linea: #e2e2e5;
+  --tenue: #5f6168;
+  --ok: #1b7f3b;
+  --ok-fondo: #e3f4e8;
+  --alerta: #8a5a00;
+  --alerta-fondo: #fff1cc;
+  --mal: #b3261e;
+  --mal-fondo: #fde4e2;
+  --externa: #1f4e9c;
+  --externa-fondo: #e2ebfa;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--negro); background: var(--fondo); }
+.barra { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; padding: 12px 24px; background: var(--negro); color: var(--blanco); }
+.barra b { font-size: 18px; letter-spacing: .5px; }
+.barra b span { color: var(--rojo); }
+.barra nav { display: flex; flex-wrap: wrap; gap: 4px; }
+.barra a { color: var(--blanco); text-decoration: none; padding: 6px 12px; border-radius: 6px; }
+.barra a:hover, .barra a:focus-visible { background: #2c2c2e; }
+.barra a[aria-current='page'] { background: var(--rojo); }
+main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+h1 { margin: 0 0 4px; font-size: 26px; }
+h2 { margin: 32px 0 10px; font-size: 18px; }
+.sub { color: var(--tenue); margin: 0 0 16px; }
+small { display: block; color: var(--tenue); font-size: 12px; }
+
+.aviso { padding: 10px 14px; border-radius: 8px; margin: 12px 0; font-weight: 600; }
+.aviso.mal { background: var(--mal-fondo); color: var(--mal); }
+.aviso.ok { background: var(--ok-fondo); color: var(--ok); }
+
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.kpi { background: var(--blanco); border: 1px solid var(--linea); border-top: 4px solid var(--tenue); border-radius: 10px; padding: 12px 14px; }
+.kpi.ok { border-top-color: var(--ok); }
+.kpi.mal { border-top-color: var(--mal); }
+.kpi .tiempo { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--tenue); }
+.kpi .valor { font-size: 32px; font-weight: 700; margin: 2px 0; }
+.kpi .meta { font-size: 13px; color: var(--tenue); }
+
+.tabla { overflow-x: auto; background: var(--blanco); border: 1px solid var(--linea); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+th { font-size: 12px; color: var(--tenue); font-weight: 600; background: #fafafa; }
+tr:last-child td { border-bottom: 0; }
+td.centro, th.centro { text-align: center; }
+
+.etiqueta { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.etiqueta.ok { background: var(--ok-fondo); color: var(--ok); }
+.etiqueta.alerta { background: var(--alerta-fondo); color: var(--alerta); }
+.etiqueta.mal, .etiqueta.evitable { background: var(--mal-fondo); color: var(--mal); }
+.etiqueta.externa { background: var(--externa-fondo); color: var(--externa); }
+
+.dos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 24px; }
+.caja { background: var(--blanco); border: 1px solid var(--linea); border-radius: 10px; padding: 14px; }
+.barra-dato { display: grid; grid-template-columns: 120px 1fr 48px; gap: 10px; align-items: center; margin: 8px 0; font-size: 14px; }
+.pista { position: relative; height: 14px; background: var(--fondo); border-radius: 7px; overflow: hidden; }
+.pista span { position: absolute; inset: 0 auto 0 0; background: var(--negro); border-radius: 7px; }
+.pista span.evitable, .pista span.mal { background: var(--mal); }
+.pista span.externa { background: var(--externa); }
+.pista span.ok { background: var(--ok); }
+.pista i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--rojo); }
+
+form .fila { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+label { font-weight: 600; font-size: 14px; }
+label small { font-weight: 400; }
+select, input[type='date'], input[type='number'], input[type='text'] { font: inherit; padding: 8px 10px; border: 1px solid #c4c4c8; border-radius: 6px; background: var(--blanco); }
+form .fila select, form .fila input { display: block; margin-top: 4px; min-width: 240px; }
+td input[type='number'] { width: 110px; }
+td.cant { white-space: nowrap; }
+tbody td:first-child { min-width: 220px; }
+td input[type='text'] { width: 190px; }
+td select { max-width: 210px; }
+input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--rojo); }
+:focus-visible { outline: 3px solid var(--rojo); outline-offset: 2px; }
+button { margin-top: 16px; font: inherit; font-weight: 600; padding: 11px 22px; border: 0; border-radius: 8px; background: var(--rojo); color: var(--blanco); cursor: pointer; }
+button:disabled { opacity: .6; cursor: wait; }
+
+.resultado { margin-top: 24px; background: var(--blanco); border: 1px solid var(--linea); border-radius: 10px; padding: 18px; }
+.resultado .grande { font-size: 44px; font-weight: 700; }
+.resultado a { color: var(--rojo); font-weight: 600; }

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Novax Engine · Tiempo 1 · Plan</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="barra">
+    <b>NOVAX <span>ENGINE</span></b>
+    <nav aria-label="Secciones">
+      <a href="index.html">Tablero</a>
+      <a href="plan.html" aria-current="page">Tiempo 1 · Plan</a>
+      <a href="cierre.html">Tiempo 2 · Cierre</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Tiempo 1 · Entregar el plan de 2 semanas</h1>
+    <p class="sub">Se entrega el jueves o viernes. Pon la cantidad solo en los rubros que vas a hacer y responde las tres
+      preguntas de cada uno. El cronograma, el rendimiento y la fecha de entrega los revisa el sistema.</p>
+    <p id="aviso" class="aviso" role="alert" hidden></p>
+
+    <form id="form" novalidate>
+      <div class="fila">
+        <label>Proyecto
+          <select id="proyecto" required></select>
+        </label>
+        <label>Lunes de inicio <small>el plan cubre ese lunes y la semana siguiente</small>
+          <input type="date" id="inicio" required>
+        </label>
+      </div>
+
+      <div class="tabla">
+        <table>
+          <thead>
+            <tr>
+              <th>Rubro</th>
+              <th>Cantidad a ejecutar</th>
+              <th class="centro">¿Ya está lo que va antes?</th>
+              <th class="centro">¿Cuadrilla y equipo completos?</th>
+              <th class="centro">¿Material pedido a tiempo?</th>
+              <th>Restricción pendiente</th>
+              <th class="centro">¿Ya liberada?</th>
+            </tr>
+          </thead>
+          <tbody id="rubros"></tbody>
+        </table>
+      </div>
+      <button type="submit">Entregar plan</button>
+    </form>
+
+    <section id="resultado" class="resultado" hidden aria-live="polite"></section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const form = document.getElementById('form');
+    const proyecto = document.getElementById('proyecto');
+    const inicio = document.getElementById('inicio');
+    const cuerpo = document.getElementById('rubros');
+    const resultado = document.getElementById('resultado');
+
+    const proximoLunes = () => {
+      const hoy = new Date();
+      hoy.setDate(hoy.getDate() + (((8 - hoy.getDay()) % 7) || 7));
+      return hoy.toLocaleDateString('en-CA');
+    };
+
+    const casilla = (nombre, rubro, pregunta) =>
+      `<td class="centro"><input type="checkbox" name="${nombre}" aria-label="${h(pregunta)}: ${h(rubro)}"></td>`;
+
+    async function cargarRubros() {
+      const rubros = await leer(db.from('rubro').select('*').eq('proyecto', proyecto.value).order('item'));
+      cuerpo.innerHTML = rubros.map(r => {
+        const nombre = `${r.item} · ${r.descripcion}`;
+        return `<tr data-id="${r.id}">
+          <td><b>${h(nombre)}</b><small>Contrato ${numero(r.cantidad_contrato)} ${h(r.unidad)} · rinde ${numero(r.rendimiento_dia)} ${h(r.unidad)}/día · cronograma ${fecha(r.inicio)} al ${fecha(r.fin)}</small></td>
+          <td class="cant"><input type="number" name="cantidad" min="0" step="any" inputmode="decimal" aria-label="Cantidad de ${h(nombre)}"> ${h(r.unidad)}</td>
+          ${casilla('secuencia', nombre, '¿Ya está lo que va antes?')}
+          ${casilla('recursos', nombre, '¿Cuadrilla y equipo completos?')}
+          ${casilla('anticipacion', nombre, '¿Material pedido a tiempo?')}
+          <td><input type="text" name="restriccion" placeholder="Ej.: permiso de LUG" aria-label="Restricción pendiente de ${h(nombre)}"></td>
+          ${casilla('liberada', nombre, '¿Restricción ya liberada?')}
+        </tr>`;
+      }).join('') || '<tr><td colspan="7"><small>Este proyecto no tiene rubros cargados.</small></td></tr>';
+    }
+
+    function mostrar(plan, nombreProyecto) {
+      const [texto, clase] = nivel(plan.nota);
+      resultado.innerHTML = `
+        <div>Plan entregado · ${h(nombreProyecto)} · ${periodo(plan.inicio)}</div>
+        <div class="grande">${plan.nota} <span class="etiqueta ${clase}">${texto}</span></div>
+        <p class="sub">Nota del plan: ${META.nota} o más es buen plan; de ${META.revisar} a ${META.nota - 1}, revisar; menos de ${META.revisar}, rehacer.</p>
+        ${CRITERIOS.map(([campo, nombre, pregunta]) => `
+          <div class="barra-dato"><span>${nombre}<small>${pregunta}</small></span>
+            <div class="pista"><span class="${plan[campo] >= META.nota ? 'ok' : 'mal'}" style="width:${plan[campo]}%"></span></div>
+            <b>${plan[campo]} %</b></div>`).join('')}
+        <p>Restricciones liberadas: <b>${plan.restricciones ? `${plan.liberadas} de ${plan.restricciones}` : 'no hay restricciones'}</b></p>
+        <p><a href="index.html">Ver el tablero</a> · <a href="cierre.html">Cerrar este plan a las 2 semanas</a></p>`;
+      resultado.hidden = false;
+      resultado.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    form.addEventListener('submit', async evento => {
+      evento.preventDefault();
+      avisar('');
+      const tareas = [...cuerpo.querySelectorAll('tr[data-id]')]
+        .map(fila => ({ fila, campo: nombre => fila.querySelector(`[name="${nombre}"]`) }))
+        .filter(({ campo }) => Number(campo('cantidad').value) > 0)
+        .map(({ fila, campo }) => ({
+          rubro: Number(fila.dataset.id),
+          cantidad: Number(campo('cantidad').value),
+          secuencia: campo('secuencia').checked,
+          recursos: campo('recursos').checked,
+          anticipacion: campo('anticipacion').checked,
+          restriccion: campo('restriccion').value,
+          liberada: campo('liberada').checked,
+        }));
+      if (!inicio.value) return avisar('Elige el lunes de inicio.');
+      if (dia(inicio.value).getDay() !== 1) return avisar('El plan tiene que empezar un lunes.');
+      if (!tareas.length) return avisar('Pon la cantidad de al menos un rubro.');
+
+      const boton = form.querySelector('button');
+      boton.disabled = true;
+      try {
+        const id = await leer(db.rpc('crear_plan', { p_proyecto: proyecto.value, p_inicio: inicio.value, p_tareas: tareas }));
+        const plan = await leer(db.from('v_plan').select('*').eq('id', id).single());
+        mostrar(plan, proyecto.selectedOptions[0].textContent);
+        await cargarRubros();
+      } catch (error) {
+        fallo(error);
+      } finally {
+        boton.disabled = false;
+      }
+    });
+
+    proyecto.addEventListener('change', () => cargarRubros().catch(fallo));
+
+    (async () => {
+      inicio.value = proximoLunes();
+      const proyectos = await leer(db.from('proyecto').select('*').neq('estado', 'En cierre').order('codigo'));
+      proyecto.innerHTML = proyectos.map(p => `<option value="${h(p.codigo)}">${h(p.codigo)} · ${h(p.nombre)}</option>`).join('');
+      await cargarRubros();
+    })().catch(fallo);
+  </script>
+</body>
+</html>
