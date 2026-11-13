@@ -1,40 +1,47 @@
 :root {
-  --primario: #0f172a;
-  --primario-suave: #1e293b;
-  --acento: #2563eb;
-  --acento-hover: #1d4ed8;
+  /* IDENTIDAD CORPORATIVA NOVAX ENGINE */
+  --negro: #141414;
+  --negro-suave: #222224;
+  --rojo: #c8102e;
+  --rojo-hover: #a80d26;
+  --rojo-suave: #fdf2f2;
+  --rojo-borde: #fecaca;
+
   --blanco: #ffffff;
-  --fondo: #f8fafc;
+  --fondo: #f4f4f5;
   --tarjeta: #ffffff;
-  --borde: #e2e8f0;
-  --borde-suave: #edf2f7;
-  --texto: #0f172a;
-  --texto-secundario: #475569;
-  --texto-apagado: #94a3b8;
+  --linea: #e2e2e5;
+  --linea-fuerte: #d4d4d8;
+  --tenue: #5f6168;
+  --texto: #141414;
+  --texto-secundario: #52525b;
+  --texto-apagado: #71717a;
 
-  --t1-color: #0284c7;
-  --t1-fondo: #f0f9ff;
-  --t1-borde: #bae6fd;
+  /* TIEMPOS */
+  --t1-color: #141414;
+  --t1-fondo: #f4f4f5;
+  --t1-borde: #d4d4d8;
 
-  --t2-color: #059669;
-  --t2-fondo: #ecfdf5;
-  --t2-borde: #a7f3d0;
+  --t2-color: #c8102e;
+  --t2-fondo: #fdf2f2;
+  --t2-borde: #fecaca;
 
-  --ok: #059669;
-  --ok-fondo: #ecfdf5;
-  --ok-borde: #a7f3d0;
+  /* INDICADORES SEMÁFORO */
+  --ok: #1b7f3b;
+  --ok-fondo: #e3f4e8;
+  --ok-borde: #bbf7d0;
 
-  --alerta: #d97706;
-  --alerta-fondo: #fffbeb;
+  --alerta: #8a5a00;
+  --alerta-fondo: #fff1cc;
   --alerta-borde: #fde68a;
 
-  --mal: #dc2626;
-  --mal-fondo: #fef2f2;
-  --mal-borde: #fecaca;
+  --mal: #b3261e;
+  --mal-fondo: #fde4e2;
+  --mal-borde: #fca5a5;
 
-  --externa: #4f46e5;
-  --externa-fondo: #eef2ff;
-  --externa-borde: #c7d2fe;
+  --externa: #1f4e9c;
+  --externa-fondo: #e2ebfa;
+  --externa-borde: #bfdbfe;
 
   --sombra-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --sombra: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
@@ -52,7 +59,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* RESET GLOBAL DE BOTONES (Previene botones rojos feos heredados) */
+/* RESET GLOBAL DE BOTONES */
 button {
   font-family: inherit;
   font-size: inherit;
@@ -64,7 +71,7 @@ button {
 }
 
 /* =========================================================
-   BARRA DE NAVEGACIÓN SUPERIOR
+   BARRA DE NAVEGACIÓN SUPERIOR (IDENTIDAD NOVAX)
    ========================================================= */
 
 .barra {
@@ -73,7 +80,7 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background: var(--primario);
+  background: var(--negro);
   color: var(--blanco);
   box-shadow: var(--sombra);
 }
@@ -88,10 +95,11 @@ button {
   font-size: 19px;
   letter-spacing: 0.5px;
   font-weight: 800;
+  color: var(--blanco);
 }
 
 .barra b span {
-  color: #38bdf8;
+  color: var(--rojo);
 }
 
 .chip-status {
@@ -102,7 +110,7 @@ button {
   padding: 3px 10px;
   border-radius: 9999px;
   font-size: 11px;
-  color: #a7f3d0;
+  color: #86efac;
   font-weight: 600;
 }
 
@@ -111,8 +119,8 @@ button {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
 }
 
 .barra nav {
@@ -122,7 +130,7 @@ button {
 }
 
 .barra a {
-  color: #cbd5e1;
+  color: #d4d4d8;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -133,12 +141,12 @@ button {
 
 .barra a:hover {
   color: var(--blanco);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .barra a[aria-current='page'] {
   color: var(--blanco);
-  background: var(--acento);
+  background: var(--rojo);
   font-weight: 600;
 }
 
@@ -165,7 +173,7 @@ h1 {
   margin: 0;
   font-size: 24px;
   font-weight: 800;
-  color: var(--primario);
+  color: var(--negro);
 }
 
 .sub {
@@ -175,12 +183,12 @@ h1 {
 }
 
 /* =========================================================
-   SELECTOR RÁPIDO DE OBRA (Pills elegantes tipo Segmented Control)
+   SELECTOR RÁPIDO DE OBRA (Pills NovaX)
    ========================================================= */
 
 .caja-selector-obra {
   background: var(--tarjeta);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea);
   border-radius: 12px;
   padding: 12px 18px;
   box-shadow: var(--sombra-sm);
@@ -199,9 +207,9 @@ h1 {
 }
 
 button.pill-obra {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+  background: var(--blanco);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--negro);
   font-size: 13px;
   font-weight: 600;
   padding: 7px 16px;
@@ -214,15 +222,16 @@ button.pill-obra {
 }
 
 button.pill-obra:hover {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: #f4f4f5;
+  border-color: var(--rojo);
+  color: var(--rojo);
 }
 
 button.pill-obra.activa {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #0f172a !important;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.25);
+  background: var(--rojo) !important;
+  color: var(--blanco) !important;
+  border-color: var(--rojo) !important;
+  box-shadow: 0 2px 4px rgba(200, 16, 46, 0.25);
 }
 
 /* =========================================================
@@ -244,7 +253,7 @@ button.pill-obra.activa {
 
 .bloque-tiempo {
   background: var(--tarjeta);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea);
   border-radius: 14px;
   padding: 18px;
   box-shadow: var(--sombra-sm);
@@ -254,11 +263,11 @@ button.pill-obra.activa {
 }
 
 .bloque-tiempo.t1 {
-  border-top: 4px solid var(--t1-color);
+  border-top: 4px solid var(--negro);
 }
 
 .bloque-tiempo.t2 {
-  border-top: 4px solid var(--t2-color);
+  border-top: 4px solid var(--rojo);
 }
 
 .bloque-tiempo-cabecera {
@@ -273,7 +282,7 @@ button.pill-obra.activa {
   gap: 8px;
   font-size: 15px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--negro);
 }
 
 .bloque-tiempo-tag {
@@ -285,15 +294,15 @@ button.pill-obra.activa {
 }
 
 .t1 .bloque-tiempo-tag {
-  background: var(--t1-fondo);
-  color: var(--t1-color);
-  border: 1px solid var(--t1-borde);
+  background: #f4f4f5;
+  color: var(--negro);
+  border: 1px solid var(--linea-fuerte);
 }
 
 .t2 .bloque-tiempo-tag {
-  background: var(--t2-fondo);
-  color: var(--t2-color);
-  border: 1px solid var(--t2-borde);
+  background: var(--rojo-suave);
+  color: var(--rojo);
+  border: 1px solid var(--rojo-borde);
 }
 
 .tarjetas-grid {
@@ -303,8 +312,8 @@ button.pill-obra.activa {
 }
 
 .kpi-compacto {
-  background: #f8fafc;
-  border: 1px solid var(--borde);
+  background: #fafafa;
+  border: 1px solid var(--linea);
   border-radius: 10px;
   padding: 14px;
   position: relative;
@@ -313,7 +322,8 @@ button.pill-obra.activa {
 
 .kpi-compacto:hover {
   transform: translateY(-2px);
-  background: #f1f5f9;
+  background: #ffffff;
+  box-shadow: var(--sombra-sm);
 }
 
 .kpi-compacto .etiqueta-kpi {
@@ -329,7 +339,7 @@ button.pill-obra.activa {
 .kpi-compacto .valor-kpi {
   font-size: 30px;
   font-weight: 800;
-  color: var(--primario);
+  color: var(--negro);
   line-height: 1.1;
   margin: 4px 0;
 }
@@ -355,8 +365,8 @@ button.btn-info {
 }
 
 button.btn-info:hover {
-  background: #e2e8f0 !important;
-  color: var(--acento) !important;
+  background: #e4e4e7 !important;
+  color: var(--negro) !important;
 }
 
 /* =========================================================
@@ -364,7 +374,7 @@ button.btn-info:hover {
    ========================================================= */
 
 .tarjeta-evidencia-sdc {
-  background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
+  background: linear-gradient(135deg, #f0f4fa 0%, #ffffff 100%);
   border: 1px solid var(--externa-borde);
   border-radius: 12px;
   padding: 16px 20px;
@@ -393,6 +403,7 @@ button.btn-info:hover {
   justify-content: center;
   border-radius: 10px;
   box-shadow: var(--sombra-sm);
+  border: 1px solid var(--externa-borde);
 }
 
 /* =========================================================
@@ -401,7 +412,7 @@ button.btn-info:hover {
 
 .tabla-tarjeta {
   background: var(--tarjeta);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--sombra-sm);
@@ -420,7 +431,7 @@ table {
 
 th, td {
   padding: 12px 16px;
-  border-bottom: 1px solid var(--borde-suave);
+  border-bottom: 1px solid var(--linea);
   vertical-align: middle;
 }
 
@@ -430,12 +441,12 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--texto-secundario);
-  background: #f8fafc;
+  background: #f4f4f5;
   white-space: nowrap;
 }
 
 tr:hover td {
-  background: #f8fafc;
+  background: #fafafa;
 }
 
 tr:last-child td {
@@ -496,7 +507,7 @@ td.centro, th.centro { text-align: center; }
 
 button.filtro-btn {
   background: var(--tarjeta);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea-fuerte);
   color: var(--texto-secundario);
   font-size: 13px;
   font-weight: 600;
@@ -507,18 +518,18 @@ button.filtro-btn {
 }
 
 button.filtro-btn:hover {
-  background: #f1f5f9;
-  color: var(--primario);
+  background: #e4e4e7;
+  color: var(--negro);
 }
 
 button.filtro-btn.activo {
-  background: var(--primario);
+  background: var(--negro);
   color: var(--blanco);
-  border-color: var(--primario);
+  border-color: var(--negro);
 }
 
 /* =========================================================
-   BOTONES
+   BOTONES NOVAX
    ========================================================= */
 
 .btn {
@@ -538,22 +549,23 @@ button.filtro-btn.activo {
 }
 
 .btn-primario {
-  background: var(--acento);
+  background: var(--rojo);
   color: var(--blanco);
 }
 
 .btn-primario:hover {
-  background: var(--acento-hover);
+  background: var(--rojo-hover);
 }
 
 .btn-secundario {
   background: var(--tarjeta);
-  color: var(--primario);
-  border: 1px solid var(--borde);
+  color: var(--negro);
+  border: 1px solid var(--linea-fuerte);
 }
 
 .btn-secundario:hover {
-  background: #f1f5f9;
+  background: #f4f4f5;
+  border-color: var(--negro);
 }
 
 .btn-exito {
@@ -562,7 +574,7 @@ button.filtro-btn.activo {
 }
 
 .btn-exito:hover {
-  background: #047857;
+  background: #15652e;
 }
 
 .btn-sm {
@@ -583,7 +595,7 @@ button.filtro-btn.activo {
 
 .tarjeta-plan {
   background: var(--tarjeta);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea);
   border-radius: 12px;
   padding: 16px;
   box-shadow: var(--sombra-sm);
@@ -595,14 +607,14 @@ button.filtro-btn.activo {
 }
 
 .tarjeta-plan:hover {
-  border-color: var(--acento);
+  border-color: var(--rojo);
   box-shadow: var(--sombra);
 }
 
 .tarjeta-plan.seleccionada {
-  border-color: var(--acento);
-  background: #f0f7ff;
-  box-shadow: 0 0 0 2px var(--acento);
+  border-color: var(--rojo);
+  background: var(--rojo-suave);
+  box-shadow: 0 0 0 2px var(--rojo);
 }
 
 /* =========================================================
@@ -612,7 +624,7 @@ button.filtro-btn.activo {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(20, 20, 20, 0.65);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -630,7 +642,7 @@ button.filtro-btn.activo {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea);
 }
 
 .modal-cabecera {
@@ -638,15 +650,15 @@ button.filtro-btn.activo {
   justify-content: space-between;
   align-items: flex-start;
   padding: 18px 24px;
-  border-bottom: 1px solid var(--borde);
-  background: #f8fafc;
+  border-bottom: 1px solid var(--linea);
+  background: #fafafa;
 }
 
 .modal-titulo {
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: var(--primario);
+  color: var(--negro);
 }
 
 .modal-subtitulo {
@@ -665,7 +677,7 @@ button.modal-cerrar {
 }
 
 button.modal-cerrar:hover {
-  color: var(--primario);
+  color: var(--rojo);
 }
 
 .modal-cuerpo {
@@ -676,8 +688,8 @@ button.modal-cerrar:hover {
 
 .modal-pie {
   padding: 14px 24px;
-  border-top: 1px solid var(--borde);
-  background: #f8fafc;
+  border-top: 1px solid var(--linea);
+  background: #fafafa;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -685,7 +697,7 @@ button.modal-cerrar:hover {
 
 .formulario-tarjeta {
   background: var(--tarjeta);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea);
   border-radius: 12px;
   padding: 20px;
   box-shadow: var(--sombra-sm);
@@ -704,9 +716,14 @@ select, input[type='date'], input[type='number'], input[type='text'], input[type
   font: inherit;
   font-size: 14px;
   padding: 8px 12px;
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea-fuerte);
   border-radius: 8px;
   background: var(--blanco);
+}
+
+select:focus, input:focus {
+  outline: 2px solid var(--rojo);
+  border-color: var(--rojo);
 }
 
 .dos-columnas {
@@ -718,7 +735,7 @@ select, input[type='date'], input[type='number'], input[type='text'], input[type
 
 .caja-grafico {
   background: var(--tarjeta);
-  border: 1px solid var(--borde);
+  border: 1px solid var(--linea);
   border-radius: 12px;
   padding: 20px;
   box-shadow: var(--sombra-sm);
@@ -736,7 +753,7 @@ select, input[type='date'], input[type='number'], input[type='text'], input[type
 .pista {
   position: relative;
   height: 12px;
-  background: #f1f5f9;
+  background: #e4e4e7;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -757,7 +774,7 @@ select, input[type='date'], input[type='number'], input[type='text'], input[type
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #f43f5e;
+  background: var(--rojo);
 }
 
 .glosario-caja {
@@ -786,15 +803,15 @@ select, input[type='date'], input[type='number'], input[type='text'], input[type
 }
 
 .glosario-fila.destacada {
-  background: #f8fafc;
+  background: #fafafa;
   padding: 10px 14px;
   border-radius: 8px;
-  border-left: 4px solid var(--acento);
+  border-left: 4px solid var(--rojo);
 }
 
 .codigo-formula {
   font-family: monospace;
-  background: #f1f5f9;
+  background: #f4f4f5;
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
