@@ -3,503 +3,372 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Novax Engine · Tablero Ejecutivo</title>
-  <link rel="stylesheet" href="estilo.css?v=4.0">
+  <title>Novax Engine · Tablero</title>
+  <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
   <header class="barra">
-    <div class="logo-bloque">
-      <b>NOVAX <span>ENGINE</span></b>
-      <span class="chip-status">En vivo · Supabase</span>
-    </div>
+    <b>NOVAX <span>ENGINE</span></b>
     <nav aria-label="Secciones">
-      <a href="index.html" aria-current="page">📊 Tablero Ejecutivo</a>
-      <a href="plan.html">⏱️ Tiempo 1 · Plan</a>
-      <a href="cierre.html">✅ Tiempo 2 · Cierre</a>
+      <a href="index.html" aria-current="page">Tablero</a>
+      <a href="plan.html">Plan y ejecución</a>
     </nav>
   </header>
 
   <main>
-    <div class="encabezado-pagina">
+    <div class="titulo">
       <div>
-        <h1>Tablero Ejecutivo de Obras</h1>
-        <p class="sub" id="sub-filtro-activo">📊 Mostrando promedio global del portafolio (todas las obras)</p>
+        <h1>Tablero de planificación</h1>
+        <p class="sub" id="sub">Cargando…</p>
       </div>
-      <div style="display:flex; gap:10px;">
-        <button type="button" class="btn btn-secundario btn-sm" onclick="cargarDatos()">🔄 Sincronizar</button>
-        <a href="plan.html" class="btn btn-primario btn-sm">➕ Nuevo Plan</a>
-      </div>
+      <label class="filtro">Proyecto
+        <select id="filtro"><option value="">Todos los proyectos</option></select>
+      </label>
     </div>
-
-    <!-- SELECTOR RÁPIDO DE OBRA (Pills interactivos) -->
-    <div class="caja-selector-obra">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:13px; font-weight:700; color:var(--primario);">Seleccionar Obra:</span>
-      </div>
-      <div id="pills-obras-contenedor" class="pills-obras">
-        <button type="button" class="pill-obra activa" onclick="seleccionarObraFiltro('todas')">🌐 Todas las Obras (Global)</button>
-      </div>
-    </div>
-
     <p id="aviso" class="aviso" role="alert" hidden></p>
 
-    <!-- LOS DOS TIEMPOS SEPARADOS CLARAMENTE -->
-    <div class="bloques-dos-tiempos">
-      
-      <!-- BLOQUE 1: TIEMPO 1 (PLANIFICACIÓN) -->
-      <section class="bloque-tiempo t1">
-        <div class="bloque-tiempo-cabecera">
-          <div class="bloque-tiempo-titulo">
-            <span style="font-size:20px;">📅</span>
-            <span>TIEMPO 1: ¿CÓMO SE PLANIFICÓ?</span>
-          </div>
-          <span class="bloque-tiempo-tag">La Promesa (Lookahead)</span>
-        </div>
+    <section class="kpis" id="kpis" aria-label="Indicadores principales"></section>
 
-        <div class="tarjetas-grid">
-          <!-- KPI NOTA -->
-          <div class="kpi-compacto" id="kpi-c-nota">
-            <div class="etiqueta-kpi">
-              <span>Nota del Plan</span>
-              <button type="button" class="btn-info" onclick="explicarKpi('nota')" title="Ver explicación">ℹ️</button>
-            </div>
-            <div class="valor-kpi" id="val-nota">—</div>
-            <div class="meta-kpi">
-              <span id="badge-nota" class="etiqueta ok">Meta ≥ 80 pts</span>
-            </div>
-          </div>
-
-          <!-- KPI RESTRICCIONES -->
-          <div class="kpi-compacto" id="kpi-c-liberadas">
-            <div class="etiqueta-kpi">
-              <span>Trabas Resueltas</span>
-              <button type="button" class="btn-info" onclick="explicarKpi('liberadas')" title="Ver explicación">ℹ️</button>
-            </div>
-            <div class="valor-kpi" id="val-liberadas">—</div>
-            <div class="meta-kpi">
-              <span id="badge-liberadas" class="etiqueta ok">Meta ≥ 90%</span>
-            </div>
-          </div>
-        </div>
+    <div class="graficos">
+      <section class="caja">
+        <h2>¿Se cumple lo que se planifica?</h2>
+        <p class="sub">Porcentaje de rubros cumplidos en cada plan de 2 semanas. La línea roja es la meta.</p>
+        <div class="lienzo"><canvas id="g-ppc" role="img"></canvas><p class="sub" hidden>Todavía no hay planes cerrados.</p></div>
       </section>
-
-      <!-- BLOQUE 2: TIEMPO 2 (EJECUCIÓN REAL) -->
-      <section class="bloque-tiempo t2">
-        <div class="bloque-tiempo-cabecera">
-          <div class="bloque-tiempo-titulo">
-            <span style="font-size:20px;">🏗️</span>
-            <span>TIEMPO 2: ¿CÓMO SE CUMPLIÓ EN OBRA?</span>
-          </div>
-          <span class="bloque-tiempo-tag">El Resultado Real</span>
-        </div>
-
-        <div class="tarjetas-grid">
-          <!-- KPI PPC -->
-          <div class="kpi-compacto" id="kpi-c-ppc">
-            <div class="etiqueta-kpi">
-              <span>PPC Cumplido</span>
-              <button type="button" class="btn-info" onclick="explicarKpi('ppc')" title="Ver explicación">ℹ️</button>
-            </div>
-            <div class="valor-kpi" id="val-ppc">—</div>
-            <div class="meta-kpi">
-              <span id="badge-ppc" class="etiqueta ok">Meta ≥ 85%</span>
-            </div>
-          </div>
-
-          <!-- KPI CANTIDADES -->
-          <div class="kpi-compacto" id="kpi-c-cantidades">
-            <div class="etiqueta-kpi">
-              <span>Valorización ($)</span>
-              <button type="button" class="btn-info" onclick="explicarKpi('cantidades')" title="Ver explicación">ℹ️</button>
-            </div>
-            <div class="valor-kpi" id="val-cantidades">—</div>
-            <div class="meta-kpi">
-              <span class="etiqueta ok">Facturado</span>
-            </div>
-          </div>
-
-          <!-- KPI EVITABLES -->
-          <div class="kpi-compacto" id="kpi-c-evitables">
-            <div class="etiqueta-kpi">
-              <span>Fallas Evitables</span>
-              <button type="button" class="btn-info" onclick="explicarKpi('evitables')" title="Ver explicación">ℹ️</button>
-            </div>
-            <div class="valor-kpi" id="val-evitables">—</div>
-            <div class="meta-kpi">
-              <span class="etiqueta mal">A corregir</span>
-            </div>
-          </div>
-        </div>
+      <section class="caja">
+        <h2>Planificado contra ejecutado</h2>
+        <p class="sub">En dólares, por proyecto, sumando los planes cerrados.</p>
+        <div class="lienzo"><canvas id="g-valor" role="img"></canvas><p class="sub" hidden>Todavía no hay planes cerrados.</p></div>
       </section>
-
+      <section class="caja">
+        <h2>¿Por qué no se cumplió?</h2>
+        <p class="sub">Rubros no cumplidos, por causa. Rojo: evitable (nuestra). Azul: externa (se reclama).</p>
+        <div class="lienzo"><canvas id="g-causas" role="img"></canvas><p class="sub" hidden>Todavía no hay rubros sin cumplir.</p></div>
+      </section>
+      <section class="caja">
+        <h2>¿De quién fue la falla?</h2>
+        <p class="sub">Las evitables se corrigen planificando mejor; las externas son sustento para las SDC.</p>
+        <div class="lienzo"><canvas id="g-tipo" role="img"></canvas><p class="sub" hidden>Todavía no hay rubros sin cumplir.</p></div>
+      </section>
     </div>
 
-    <!-- BLOQUE 3: RESPALDO SDC (RECLAMOS) -->
-    <div class="tarjeta-evidencia-sdc">
-      <div class="evidencia-izq">
-        <div class="icono-escudo">🛡️</div>
-        <div>
-          <div style="font-size:15px; font-weight:700; color:var(--primario);">
-            Atraso Externo Documentado: <b id="val-externas" style="color:var(--externa); font-size:18px;">— días</b>
-          </div>
-          <div class="sub" style="font-size:13px; margin:0;">
-            Días respaldados por lluvias extraordinarias o demoras del cliente listos para sustentar ampliaciones de plazo (SDC).
-          </div>
-        </div>
-      </div>
-      <div>
-        <button type="button" class="btn btn-secundario btn-sm" onclick="cambiarPestaña('sdc')">
-          ⚖️ Ver Expediente SDC →
-        </button>
-      </div>
+    <h2>Estado por proyecto</h2>
+    <div class="tabla">
+      <table>
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Plan actual</th>
+            <th class="centro">Calidad del plan</th>
+            <th>Cumplimiento del último cierre</th>
+            <th>Qué significa</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="proyectos"></tbody>
+      </table>
     </div>
 
-    <!-- PESTAÑAS DE VISTA -->
-    <div class="filtros-pestañas">
-      <button type="button" class="filtro-btn activo" id="tab-btn-obras" onclick="cambiarPestaña('obras')">🏢 Resumen de Obras</button>
-      <button type="button" class="filtro-btn" id="tab-btn-analisis" onclick="cambiarPestaña('analisis')">📉 Gráficos de PPC y Causas</button>
-      <button type="button" class="filtro-btn" id="tab-btn-sdc" onclick="cambiarPestaña('sdc')">⚖️ Sustento Contractual SDC</button>
-    </div>
-
-    <!-- SECCIÓN 1: TABLA DE OBRAS -->
-    <div id="vista-obras">
-      <div class="tabla-tarjeta">
-        <div class="tabla-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Obra / Proyecto</th>
-                <th>Tiempo 1: Lookahead</th>
-                <th class="centro">Nota T1</th>
-                <th>Tiempo 2: Último Cierre</th>
-                <th class="centro">PPC Real</th>
-                <th>Lectura Ejecutiva</th>
-                <th class="centro">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="cuerpo-proyectos">
-              <tr><td colspan="7" class="centro"><small>Cargando datos…</small></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECCIÓN 2: GRÁFICOS -->
-    <div id="vista-analisis" hidden>
-      <div class="dos-columnas">
-        <div class="caja-grafico">
-          <h3>📈 Tendencia Quincenal del PPC</h3>
-          <p class="sub" style="margin-bottom:14px;">La línea vertical roja marca la meta del 85%.</p>
-          <div id="grafico-tendencia"></div>
-        </div>
-        <div class="caja-grafico">
-          <h3>⚠️ Causas de No Cumplimiento</h3>
-          <p class="sub" style="margin-bottom:14px;">Evitables (gestión interna) vs. Externas (reclamables).</p>
-          <div id="grafico-causas"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SECCIÓN 3: SDC -->
-    <div id="vista-sdc" hidden>
-      <div class="tabla-tarjeta">
-        <div class="tabla-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Proyecto</th>
-                <th>Período</th>
-                <th>Rubro de Obra Afectado</th>
-                <th class="centro">Plan vs. Real</th>
-                <th>Causa Externa Imputable</th>
-                <th class="centro">Días</th>
-              </tr>
-            </thead>
-            <tbody id="cuerpo-evidencia">
-              <tr><td colspan="6" class="centro"><small>Sin atrasos externos registrados.</small></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <h2>Atrasos externos documentados (sustento para SDC)</h2>
+    <div class="tabla">
+      <table>
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Período</th>
+            <th>Rubro</th>
+            <th>Planificado / ejecutado</th>
+            <th>Causa</th>
+            <th class="centro">Días</th>
+          </tr>
+        </thead>
+        <tbody id="evidencia"></tbody>
+      </table>
     </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script>
-    let cacheProyectos = [];
-    let cachePlanes = [];
-    let cacheFallas = [];
-    let obraFiltroActual = 'todas';
+    const $ = id => document.getElementById(id);
+    const color = nombre => getComputedStyle(document.documentElement).getPropertyValue(`--${nombre}`).trim();
+    const graficos = {};
+    let datos;
 
-    function cambiarPestaña(nombre) {
-      document.querySelectorAll('.filtro-btn').forEach(btn => btn.classList.remove('activo'));
-      document.getElementById(`tab-btn-${nombre}`).classList.add('activo');
+    const valores = {
+      id: 'valores',
+      afterDatasetsDraw(chart, _args, opciones) {
+        if (!opciones.formato) return;
+        const { ctx } = chart;
+        const dona = chart.config.type === 'doughnut';
+        const horizontal = chart.options.indexAxis === 'y';
+        ctx.save();
+        ctx.font = '600 12px Segoe UI, system-ui, sans-serif';
+        ctx.fillStyle = color(dona ? 'blanco' : 'negro');
+        ctx.textAlign = horizontal ? 'left' : 'center';
+        ctx.textBaseline = horizontal || dona ? 'middle' : 'bottom';
+        chart.data.datasets.forEach((serie, i) => {
+          if (serie.type === 'line') return;
+          chart.getDatasetMeta(i).data.forEach((elemento, j) => {
+            const valor = serie.data[j];
+            if (!valor) return;
+            const { x, y } = elemento.tooltipPosition();
+            ctx.fillText(opciones.formato(valor), horizontal ? x + 6 : x, horizontal || dona ? y : y - 4);
+          });
+        });
+        ctx.restore();
+      },
+    };
 
-      document.getElementById('vista-obras').hidden = nombre !== 'obras';
-      document.getElementById('vista-analisis').hidden = nombre !== 'analisis';
-      document.getElementById('vista-sdc').hidden = nombre !== 'sdc';
+    const centro = {
+      id: 'centro',
+      afterDraw(chart, _args, opciones) {
+        if (!opciones.texto) return;
+        const { ctx, chartArea: { left, right, top, bottom } } = chart;
+        const x = (left + right) / 2;
+        const y = (top + bottom) / 2;
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = color('negro');
+        ctx.font = '700 26px Segoe UI, system-ui, sans-serif';
+        ctx.fillText(opciones.texto, x, y - 8);
+        ctx.fillStyle = color('tenue');
+        ctx.font = '12px Segoe UI, system-ui, sans-serif';
+        ctx.fillText(opciones.detalle, x, y + 14);
+        ctx.restore();
+      },
+    };
+
+    Chart.register(valores, centro);
+    Chart.defaults.font.family = 'Segoe UI, system-ui, sans-serif';
+    Chart.defaults.color = color('tenue');
+    Chart.defaults.maintainAspectRatio = false;
+    Chart.defaults.plugins.legend.position = 'bottom';
+
+    const dineroCorto = valor => `$${(valor / 1000).toLocaleString('es-EC', { maximumFractionDigits: 1 })} mil`;
+
+    function dibujar(id, resumen, config) {
+      const lienzo = $(id);
+      const vacio = !config.data.labels.length;
+      lienzo.hidden = vacio;
+      lienzo.nextElementSibling.hidden = !vacio;
+      lienzo.setAttribute('aria-label', resumen);
+      graficos[id]?.destroy();
+      if (!vacio) graficos[id] = new Chart(lienzo, config);
     }
 
-    async function cargarDatos() {
-      try {
-        const [proyectos, planes, fallas] = await Promise.all([
-          leer(db.from('proyecto').select('*').order('codigo')),
-          leer(db.from('v_plan').select('*').order('inicio')),
-          leer(db.from('v_tarea').select('*').eq('cerrado', true).eq('cumplida', false).order('inicio')),
-        ]);
+    const tarjeta = ({ icono, nombre, valor, frase, meta, estado = '' }) => `
+      <article class="kpi ${estado}">
+        <div class="icono"><i data-lucide="${icono}"></i></div>
+        <div>
+          <h3>${nombre}</h3>
+          <p class="valor">${valor}</p>
+          <p class="frase">${frase}</p>
+          ${meta ? `<span class="etiqueta ${estado}">${meta}</span>` : ''}
+        </div>
+      </article>`;
 
-        cacheProyectos = proyectos;
-        cachePlanes = planes;
-        cacheFallas = fallas;
+    const cumpleMeta = (estado, meta) => `${estado === 'ok' ? 'Cumple la meta' : 'Bajo la meta'}: ${meta}`;
 
-        renderizarPillsObras();
-        recalcularMetricas();
-        renderizarTablaObras();
-        renderizarGraficos();
-        renderizarSdc();
-      } catch (err) {
-        fallo(err);
-      }
-    }
+    function pintar() {
+      const filtro = $('filtro').value;
+      const delFiltro = fila => !filtro || fila.proyecto === filtro;
+      const proyectos = datos.proyectos.filter(p => !filtro || p.codigo === filtro);
+      const planes = datos.planes.filter(delFiltro);
+      const fallas = datos.fallas.filter(delFiltro);
+      const cerrados = planes.filter(p => p.cerrado);
 
-    function renderizarPillsObras() {
-      const cont = document.getElementById('pills-obras-contenedor');
-      cont.innerHTML = `
-        <button type="button" class="pill-obra ${obraFiltroActual === 'todas' ? 'activa' : ''}" onclick="seleccionarObraFiltro('todas')">
-          🌐 Todas las Obras (Global)
-        </button>
-      ` + cacheProyectos.map(p => `
-        <button type="button" class="pill-obra ${obraFiltroActual === p.codigo ? 'activa' : ''}" onclick="seleccionarObraFiltro('${p.codigo}')">
-          🏢 ${h(p.codigo)} · ${h(p.nombre.split(' ')[0])}
-        </button>
-      `).join('');
-    }
+      const ultimo = (codigo, soloCerrados) =>
+        planes.filter(p => p.proyecto === codigo && (!soloCerrados || p.cerrado)).at(-1);
+      const vigentes = proyectos.map(p => ultimo(p.codigo, false)).filter(Boolean);
+      const cierres = proyectos.map(p => ultimo(p.codigo, true)).filter(Boolean);
+      const externas = fallas.filter(f => f.causa_tipo === 'externa');
 
-    function seleccionarObraFiltro(codigo) {
-      obraFiltroActual = codigo;
-      renderizarPillsObras();
-      recalcularMetricas();
-      renderizarTablaObras();
-    }
-
-    function recalcularMetricas() {
-      const sub = document.getElementById('sub-filtro-activo');
-      let proyectosFiltrados = cacheProyectos;
-      let planesFiltrados = cachePlanes;
-      let fallasFiltradas = cacheFallas;
-
-      if (obraFiltroActual === 'todas') {
-        sub.innerHTML = `📊 Mostrando <b>promedio global del portafolio</b> (${cacheProyectos.length} obras en ejecución)`;
-      } else {
-        const p = cacheProyectos.find(x => x.codigo === obraFiltroActual);
-        proyectosFiltrados = [p];
-        planesFiltrados = cachePlanes.filter(x => x.proyecto === obraFiltroActual);
-        fallasFiltradas = cacheFallas.filter(x => x.proyecto === obraFiltroActual);
-        sub.innerHTML = `🏢 Mostrando métricas exclusivas de: <b>${h(p.codigo)} · ${h(p.nombre)}</b> (Supervisor: ${h(p.supervisor)})`;
-      }
-
-      const ultimo = (cod, soloCerrados) =>
-        planesFiltrados.filter(pl => pl.proyecto === cod && (!soloCerrados || pl.cerrado)).at(-1);
-
-      const vigentes = proyectosFiltrados.map(p => ultimo(p.codigo, false)).filter(Boolean);
-      const cierres = proyectosFiltrados.map(p => ultimo(p.codigo, true)).filter(Boolean);
-      const externas = fallasFiltradas.filter(f => f.causa_tipo === 'externa');
-
+      const tareas = suma(cierres, 'tareas');
+      const cumplidas = suma(cierres, 'cumplidas');
+      const evitablesCierre = suma(cierres, 'evitables');
       const nota = vigentes.length ? Math.round(suma(vigentes, 'nota') / vigentes.length) : null;
-      const liberadas = pct(suma(vigentes, 'liberadas'), suma(vigentes, 'restricciones'));
-      const ppc = pct(suma(cierres, 'cumplidas'), suma(cierres, 'tareas'));
+      const restricciones = suma(vigentes, 'restricciones');
+      const liberadas = suma(vigentes, 'liberadas');
+      const ppc = pct(cumplidas, tareas);
       const cantidades = pct(suma(cierres, 'valor_real'), suma(cierres, 'valor_plan'));
-      const evitables = pct(suma(cierres, 'evitables'), suma(cierres, 'tareas'));
-      const diasExternos = suma(externas, 'dias_atraso');
+      const evitables = pct(evitablesCierre, tareas);
+      const dias = suma(externas, 'dias_atraso');
 
-      // T1 Nota
-      document.getElementById('val-nota').textContent = nota !== null ? `${nota}` : '—';
-      const [tNota, cNota] = nivel(nota ?? 0);
-      document.getElementById('badge-nota').className = `etiqueta ${nota !== null ? cNota : 'alerta'}`;
-      document.getElementById('badge-nota').textContent = nota !== null ? `${tNota}` : 'Sin planes';
-      document.getElementById('kpi-c-nota').className = `kpi-compacto ${nota !== null ? cNota : ''}`;
+      $('sub').textContent = `${proyectos.length} proyectos · ${planes.length} planes · actualizado ${new Date().toLocaleString('es-EC')}`;
 
-      // T1 Trabas
-      document.getElementById('val-liberadas').textContent = liberadas !== null ? `${liberadas}%` : '—';
-      document.getElementById('kpi-c-liberadas').className = `kpi-compacto ${liberadas >= META.liberadas ? 'ok' : 'alerta'}`;
+      const estadoPpc = semaforo(ppc, META.ppc, 70);
+      const [textoNota] = nota === null ? [''] : nivel(nota);
+      const estadoNota = semaforo(nota, META.nota, META.revisar);
+      const estadoLiberadas = semaforo(pct(liberadas, restricciones), META.liberadas, 60);
+      const estadoCantidades = semaforo(cantidades, META.cantidades, 70);
+      const estadoEvitables = evitables === null ? '' : evitables < META.evitables ? 'ok' : evitables < 2 * META.evitables ? 'alerta' : 'mal';
+      const sinCierre = 'Todavía no hay planes cerrados.';
 
-      // T2 PPC
-      document.getElementById('val-ppc').textContent = ppc !== null ? `${ppc}%` : '—';
-      document.getElementById('kpi-c-ppc').className = `kpi-compacto ${ppc >= META.ppc ? 'ok' : 'mal'}`;
+      $('kpis').innerHTML = [
+        tarjeta({
+          icono: 'target', nombre: 'Cumplimiento del plan (PPC)', estado: estadoPpc,
+          valor: ppc === null ? '—' : `${ppc} %`,
+          frase: ppc === null ? sinCierre : `De ${tareas} rubros planificados, <b>${cumplidas} se hicieron completos</b> en el último cierre de cada obra.`,
+          meta: ppc === null ? '' : cumpleMeta(estadoPpc, `${META.ppc} % o más`),
+        }),
+        tarjeta({
+          icono: 'clipboard-check', nombre: 'Calidad de los planes', estado: estadoNota,
+          valor: nota === null ? '—' : `${nota}<small> / 100</small>`,
+          frase: nota === null ? 'Todavía no hay planes.' : `<b>${textoNota}.</b> Mide si llegan a tiempo, con recursos y con cantidades que caben en el rendimiento.`,
+          meta: nota === null ? '' : cumpleMeta(estadoNota, `${META.nota} o más`),
+        }),
+        tarjeta({
+          icono: 'shield-check', nombre: 'Restricciones liberadas', estado: restricciones ? estadoLiberadas : '',
+          valor: restricciones ? `${liberadas} de ${restricciones}` : '—',
+          frase: restricciones ? 'Bloqueos (permisos, material, frentes) resueltos antes de empezar, en los planes actuales.' : 'Los planes actuales no tienen restricciones.',
+          meta: restricciones ? cumpleMeta(estadoLiberadas, `${META.liberadas} % o más`) : '',
+        }),
+        tarjeta({
+          icono: 'circle-dollar-sign', nombre: 'Avance en dinero', estado: estadoCantidades,
+          valor: cantidades === null ? '—' : `${cantidades} %`,
+          frase: cantidades === null ? sinCierre : `Se ejecutaron <b>${dinero(suma(cierres, 'valor_real'))}</b> de ${dinero(suma(cierres, 'valor_plan'))} planificados.`,
+          meta: cantidades === null ? '' : cumpleMeta(estadoCantidades, `${META.cantidades} % o más`),
+        }),
+        tarjeta({
+          icono: 'triangle-alert', nombre: 'Fallas evitables', estado: estadoEvitables,
+          valor: evitables === null ? '—' : `${evitables} %`,
+          frase: evitables === null ? sinCierre : `<b>${evitablesCierre} de ${tareas} rubros</b> fallaron por causas nuestras: material, equipo o cuadrilla.`,
+          meta: evitables === null ? '' : `${estadoEvitables === 'ok' ? 'Cumple la meta' : 'Sobre la meta'}: menos de ${META.evitables} %`,
+        }),
+        tarjeta({
+          icono: 'cloud-rain', nombre: 'Atraso por terceros', estado: 'info',
+          valor: `${dias}<small> días</small>`,
+          frase: `Por clima, LUG o diseño en <b>${externas.length} rubros</b>. Es el sustento para pedir ampliación en las SDC.`,
+        }),
+      ].join('');
 
-      // T2 Cantidades
-      document.getElementById('val-cantidades').textContent = cantidades !== null ? `${cantidades}%` : '—';
+      const periodos = [...new Set(cerrados.map(p => p.inicio))].sort();
+      const ppcs = periodos.map(inicio => {
+        const grupo = cerrados.filter(p => p.inicio === inicio);
+        return pct(suma(grupo, 'cumplidas'), suma(grupo, 'tareas'));
+      });
+      dibujar('g-ppc', `Cumplimiento por período: ${periodos.map((p, i) => `${periodo(p)} ${ppcs[i]} %`).join(', ')}`, {
+        type: 'bar',
+        data: {
+          labels: periodos.map(p => periodo(p).replace(' al ', ' – ')),
+          datasets: [
+            { label: 'Cumplimiento', data: ppcs, backgroundColor: ppcs.map(v => color(semaforo(v, META.ppc, 70))), borderRadius: 6, maxBarThickness: 64 },
+            { type: 'line', label: `Meta ${META.ppc} %`, data: periodos.map(() => META.ppc), borderColor: color('rojo'), borderDash: [6, 4], borderWidth: 2, pointRadius: 0 },
+          ],
+        },
+        options: {
+          layout: { padding: { top: 18 } },
+          scales: { y: { min: 0, max: 100, ticks: { callback: v => `${v} %` } }, x: { grid: { display: false } } },
+          plugins: { valores: { formato: v => `${v} %` } },
+        },
+      });
 
-      // T2 Evitables
-      document.getElementById('val-evitables').textContent = evitables !== null ? `${evitables}%` : '0%';
+      const porProyecto = proyectos
+        .map(p => ({ codigo: p.codigo, planes: cerrados.filter(x => x.proyecto === p.codigo) }))
+        .filter(x => x.planes.length);
+      dibujar('g-valor', `Planificado contra ejecutado: ${porProyecto.map(x => `${x.codigo} ${dinero(suma(x.planes, 'valor_real'))} de ${dinero(suma(x.planes, 'valor_plan'))}`).join(', ')}`, {
+        type: 'bar',
+        data: {
+          labels: porProyecto.map(x => x.codigo),
+          datasets: [
+            { label: 'Planificado', data: porProyecto.map(x => suma(x.planes, 'valor_plan')), backgroundColor: color('gris'), borderRadius: 4 },
+            { label: 'Ejecutado', data: porProyecto.map(x => suma(x.planes, 'valor_real')), backgroundColor: color('negro'), borderRadius: 4 },
+          ],
+        },
+        options: {
+          indexAxis: 'y',
+          layout: { padding: { right: 70 } },
+          scales: { x: { ticks: { callback: dineroCorto } }, y: { grid: { display: false } } },
+          plugins: { valores: { formato: dineroCorto } },
+        },
+      });
 
-      // SDC
-      document.getElementById('val-externas').textContent = `${diasExternos} días`;
-    }
+      const causas = Object.values(fallas.reduce((grupos, f) => {
+        grupos[f.causa_nombre] ??= { nombre: f.causa_nombre, tipo: f.causa_tipo, veces: 0 };
+        grupos[f.causa_nombre].veces++;
+        return grupos;
+      }, {})).sort((a, b) => b.veces - a.veces);
+      dibujar('g-causas', `Causas: ${causas.map(c => `${c.nombre} ${c.veces}`).join(', ')}`, {
+        type: 'bar',
+        data: {
+          labels: causas.map(c => c.nombre),
+          datasets: [{ label: 'Rubros', data: causas.map(c => c.veces), backgroundColor: causas.map(c => color(c.tipo === 'evitable' ? 'mal' : 'externa')), borderRadius: 4 }],
+        },
+        options: {
+          indexAxis: 'y',
+          layout: { padding: { right: 30 } },
+          scales: { x: { ticks: { precision: 0 } }, y: { grid: { display: false } } },
+          plugins: { legend: { display: false }, valores: { formato: v => v } },
+        },
+      });
 
-    function renderizarTablaObras() {
-      const cuerpo = document.getElementById('cuerpo-proyectos');
-      const ultimo = (cod, soloCerrados) =>
-        cachePlanes.filter(pl => pl.proyecto === cod && (!soloCerrados || pl.cerrado)).at(-1);
+      const totalEvitables = fallas.filter(f => f.causa_tipo === 'evitable').length;
+      const totalExternas = fallas.length - totalEvitables;
+      dibujar('g-tipo', `Evitables ${totalEvitables}, externas ${totalExternas}`, {
+        type: 'doughnut',
+        data: {
+          labels: fallas.length ? ['Evitables (nuestras)', 'Externas (se reclaman)'] : [],
+          datasets: [{ data: [totalEvitables, totalExternas], backgroundColor: [color('mal'), color('externa')], borderWidth: 0 }],
+        },
+        options: {
+          cutout: '62%',
+          plugins: {
+            valores: { formato: v => v },
+            centro: { texto: `${pct(totalEvitables, fallas.length)} %`, detalle: 'evitables' },
+          },
+        },
+      });
 
-      const lista = obraFiltroActual === 'todas'
-        ? cacheProyectos
-        : cacheProyectos.filter(p => p.codigo === obraFiltroActual);
-
-      cuerpo.innerHTML = lista.map(p => {
+      $('proyectos').innerHTML = proyectos.map(p => {
         const vigente = ultimo(p.codigo, false);
         const cierre = ultimo(p.codigo, true);
-        const ppcCierre = cierre && pct(cierre.cumplidas, cierre.tareas);
-
-        return `
-          <tr style="cursor:pointer;" onclick="verDetalleObra('${p.codigo}')">
-            <td>
-              <b>${h(p.codigo)} · ${h(p.nombre)}</b>
-              <small>${h(p.supervisor)} · ${h(p.estado)}</small>
-            </td>
-            <td>
-              ${vigente ? `<b>${periodo(vigente.inicio)}</b><small>${vigente.cerrado ? '✓ Cerrado' : '⏱️ En curso'}</small>` : '<small>Sin plan</small>'}
-            </td>
-            <td class="centro">
-              ${vigente ? `<span class="etiqueta ${nivel(vigente.nota)[1]}"><b>${vigente.nota}</b></span>` : '—'}
-            </td>
-            <td>
-              ${cierre ? `<b>${periodo(cierre.inicio)}</b><small>${cierre.cumplidas}/${cierre.tareas} rubros</small>` : '<small>Aún sin cierre</small>'}
-            </td>
-            <td class="centro">
-              ${cierre ? `<span class="etiqueta ${ppcCierre >= META.ppc ? 'ok' : 'mal'}"><b>${ppcCierre}%</b></span>` : '—'}
-            </td>
-            <td>
-              <span style="font-weight:600; font-size:13px; color:var(--primario);">${h(lectura(cierre))}</span>
-            </td>
-            <td class="centro" onclick="event.stopPropagation()">
-              <button type="button" class="btn btn-secundario btn-sm" onclick="verDetalleObra('${p.codigo}')">🔍 Ver</button>
-            </td>
-          </tr>
-        `;
+        const nombre = `<b>${h(p.codigo)} · ${h(p.nombre)}</b><small>${h(p.supervisor)} · ${h(p.estado)}</small>`;
+        if (!vigente) return `<tr><td>${nombre}</td><td colspan="5"><small>Sin planes registrados</small></td></tr>`;
+        const [texto, clase] = nivel(vigente.nota);
+        const valor = cierre ? pct(cierre.cumplidas, cierre.tareas) : null;
+        const [significa, claseSignifica] = cierre ? lectura(cierre) : ['Aún sin cierre', ''];
+        const estado = vigente.cerrado
+          ? '<span class="etiqueta ok"><i data-lucide="check"></i> Cerrado</span>'
+          : '<span class="etiqueta alerta"><i data-lucide="lock"></i> Enviado · falta cerrar</span>';
+        return `<tr>
+          <td>${nombre}</td>
+          <td>${periodo(vigente.inicio)}<br>${estado}</td>
+          <td class="centro"><b>${vigente.nota}</b> / 100<br><span class="etiqueta ${clase}">${texto}</span></td>
+          <td>${cierre ? `${barraMini(valor, semaforo(valor, META.ppc, 70))}<small>${cierre.cumplidas} de ${cierre.tareas} rubros · ${periodo(cierre.inicio)}</small>` : '<small>Aún sin cierre</small>'}</td>
+          <td><span class="etiqueta ${claseSignifica}">${h(significa)}</span></td>
+          <td><a href="plan.html?proyecto=${encodeURIComponent(p.codigo)}&plan=${vigente.id}">Ver plan</a></td>
+        </tr>`;
       }).join('');
-    }
 
-    function renderizarGraficos() {
-      const periodos = [...new Set(cachePlanes.filter(p => p.cerrado).map(p => p.inicio))];
-      document.getElementById('grafico-tendencia').innerHTML = periodos.map(ini => {
-        const grupo = cachePlanes.filter(p => p.cerrado && p.inicio === ini);
-        const val = pct(suma(grupo, 'cumplidas'), suma(grupo, 'tareas'));
-        return `
-          <div class="barra-dato">
-            <span><b>${fecha(ini)}</b></span>
-            <div class="pista">
-              <span class="${val >= META.ppc ? 'ok' : 'mal'}" style="width:${val ?? 0}%"></span>
-              <i style="left:${META.ppc}%;"></i>
-            </div>
-            <b>${val}%</b>
-          </div>
-        `;
-      }).join('') || '<p class="sub">Sin cierres aún.</p>';
-
-      const causas = Object.values(cacheFallas.reduce((acc, f) => {
-        acc[f.causa_nombre] ??= { nombre: f.causa_nombre, tipo: f.causa_tipo, veces: 0 };
-        acc[f.causa_nombre].veces++;
-        return acc;
-      }, {})).sort((a, b) => b.veces - a.veces);
-
-      document.getElementById('grafico-causas').innerHTML = causas.length
-        ? causas.map(c => `
-            <div class="barra-dato">
-              <span><b>${h(c.nombre)}</b></span>
-              <div class="pista">
-                <span class="${c.tipo}" style="width:${pct(c.veces, cacheFallas.length)}%"></span>
-              </div>
-              <b>${c.veces}</b>
-            </div>
-          `).join('')
-        : '<p class="sub">Sin atrasos registrados.</p>';
-    }
-
-    function renderizarSdc() {
-      const externas = cacheFallas.filter(f => f.causa_tipo === 'externa');
-      const cuerpo = document.getElementById('cuerpo-evidencia');
-      if (!externas.length) {
-        cuerpo.innerHTML = '<tr><td colspan="6" class="centro"><small>No se registran atrasos externos.</small></td></tr>';
-        return;
-      }
-      cuerpo.innerHTML = externas.map(f => `
-        <tr>
-          <td><b>${h(f.proyecto)}</b></td>
+      $('evidencia').innerHTML = externas.map(f => `<tr>
+          <td>${h(f.proyecto)}</td>
           <td>${periodo(f.inicio)}</td>
-          <td>
-            <b>${h(f.item)} · ${h(f.descripcion)}</b>
-            ${f.restriccion ? `<small style="color:var(--alerta)">Restricción: ${h(f.restriccion)}</small>` : ''}
-          </td>
-          <td class="centro">${numero(f.cantidad_plan)} / ${numero(f.cantidad_real)} ${h(f.unidad)}</td>
+          <td>${h(f.item)} · ${h(f.descripcion)}${f.restriccion ? `<small>Restricción: ${h(f.restriccion)}</small>` : ''}</td>
+          <td>${numero(f.cantidad_plan)} / ${numero(f.cantidad_real)} ${h(f.unidad)}</td>
           <td><span class="etiqueta externa">${h(f.causa_nombre)}</span></td>
-          <td class="centro" style="font-weight:700; color:var(--externa);">${f.dias_atraso} días</td>
-        </tr>
-      `).join('');
+          <td class="centro">${f.dias_atraso}</td>
+        </tr>`).join('') || '<tr><td colspan="6"><small>Sin atrasos externos registrados.</small></td></tr>';
+
+      window.lucide?.createIcons();
     }
 
-    function verDetalleObra(codigo) {
-      const proy = cacheProyectos.find(p => p.codigo === codigo);
-      if (!proy) return;
+    (async () => {
+      const [proyectos, planes, fallas] = await Promise.all([
+        leer(db.from('proyecto').select('*').order('codigo')),
+        leer(db.from('v_plan').select('*').order('inicio')),
+        leer(db.from('v_tarea').select('*').eq('cerrado', true).eq('cumplida', false).order('inicio')),
+      ]);
+      datos = { proyectos, planes, fallas };
+      $('filtro').insertAdjacentHTML('beforeend', proyectos.map(p => `<option value="${h(p.codigo)}">${h(p.codigo)} · ${h(p.nombre)}</option>`).join(''));
+      pintar();
+    })().catch(fallo);
 
-      const planesObra = cachePlanes.filter(p => p.proyecto === codigo).sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
-      const planesAbiertos = planesObra.filter(p => !p.cerrado);
-
-      const html = `
-        <div style="margin-bottom:14px;">
-          <div style="font-size:14px; color:var(--texto-secundario);">
-            Supervisor: <b>${h(proy.supervisor)}</b> · Estado: <b>${h(proy.estado)}</b>
-          </div>
-        </div>
-
-        ${planesAbiertos.length ? `
-          <div style="background:#fffbeb; border:1px solid var(--alerta-borde); padding:12px; border-radius:8px; margin-bottom:14px;">
-            <div style="font-weight:700; color:var(--alerta); font-size:13px;">⏱️ Plan abierto pendiente de cierre:</div>
-            <div style="font-size:13px; margin:4px 0 8px;">Período: <b>${periodo(planesAbiertos[0].inicio)}</b> (${planesAbiertos[0].tareas} rubros).</div>
-            <a href="cierre.html?plan_id=${planesAbiertos[0].id}" class="btn btn-primario btn-sm">▶ Cerrar en Tiempo 2</a>
-          </div>
-        ` : ''}
-
-        <h4 style="margin:12px 0 6px; font-size:14px;">Historial de Lookaheads de esta obra:</h4>
-        <div class="tabla-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Período</th>
-                <th class="centro">Nota T1</th>
-                <th class="centro">PPC T2</th>
-                <th>Diagnóstico</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${planesObra.map(p => `
-                <tr>
-                  <td><b>${periodo(p.inicio)}</b></td>
-                  <td class="centro"><span class="etiqueta ${nivel(p.nota)[1]}">${p.nota}</span></td>
-                  <td class="centro">${p.cerrado ? `<span class="etiqueta ${pct(p.cumplidas, p.tareas) >= META.ppc ? 'ok' : 'mal'}">${pct(p.cumplidas, p.tareas)}%</span>` : '<small>En curso</small>'}</td>
-                  <td><small>${h(lectura(p)) || 'Pendiente'}</small></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-
-      abrirModal({
-        titulo: `🏢 ${h(proy.codigo)} · ${h(proy.nombre)}`,
-        contenidoHtml: html,
-        botonesHtml: `
-          <a href="plan.html?proyecto=${proy.codigo}" class="btn btn-primario">➕ Crear Nuevo Plan</a>
-          <button type="button" class="btn btn-secundario" onclick="cerrarModal()">Cerrar</button>
-        `,
-        anchoMax: '650px'
-      });
-    }
-
-    cargarDatos();
+    $('filtro').addEventListener('change', pintar);
   </script>
 </body>
 </html>
